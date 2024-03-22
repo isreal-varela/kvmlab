@@ -6,7 +6,7 @@
     pool_dir: "/home/yo_sup/VM"
     vcpus: 2
     ram_mb: 2048
-    net: default 
+    net: br0 
     ssh_pub_key: "/home/yo_sup/.ssh/personal.pub"
 
   tasks:

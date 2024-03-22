@@ -4,9 +4,10 @@
   package:
     name:
       - libguestfs-tools 
+      - guestfs-tools
       - python3-libvirt
       - virt-install
-      - libvirt-devel
+        #- libvirt-devel
       - virt-top
       - virt-manager
     state: present
@@ -27,8 +28,11 @@
       src: "{{ libvirt_pool_dir }}/{{ base_image_name }}"
       force: no
       remote_src: yes 
-      mode: 0660
+      mode: 0666
     register: copy_results
+
+  - pause:
+      seconds: 5
 
   - name: Configure the image
     command: |
