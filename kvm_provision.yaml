@@ -22,8 +22,6 @@
         cleanup_tmp: "{{ cleanup }}"
         ssh_key: "{{ ssh_pub_key }}"
       with_items:
-        - lab01
-        - lab02
-        - lab03
-    
-    
+        - tang
+        - ipa1
+        - gitlab

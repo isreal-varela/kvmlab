@@ -2,7 +2,7 @@
 # defaults file for kvm_provision
 base_image_name: rhel-9.3-x86_64-kvm.qcow2
 libvirt_pool_dir: "/home/yo_sup/VM"
-vm_name: rhel8.5-dev
+vm_name: rhel9.3-dev
 vm_vcpus: 2
 vm_ram_mb: 2048
 vm_net: br0 

@@ -1,0 +1,28 @@
+---
+- hosts: all
+  gather_facts: false
+  any_errors_fatal: yes
+  tasks:
+
+  - name: DNF update the system
+    dnf:
+      name:  "*"
+      state: latest
+
+  - name: Install the latest version of yum-utils
+    dnf:
+      name: yum-utils
+      state: latest
+
+  - name: Reboot required
+    command: "/usr/bin/needs-restarting -r"
+    register: reboot_required
+    ignore_errors: True
+    changed_when: False
+    failed_when: reboot_required.rc == 2
+
+  - name: Rebooting
+    reboot:
+      post_reboot_delay: 60
+    throttle: 1
+    when: reboot_required.rc == 1 and ansible_facts ['virtualization_role'] != 'host'boot_required.rc == 1 and ansible_facts ['virtualization_role'] != 'host'
