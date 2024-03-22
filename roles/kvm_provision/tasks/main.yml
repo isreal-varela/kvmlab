@@ -31,9 +31,6 @@
       mode: 0666
     register: copy_results
 
-  - pause:
-      seconds: 5
-
   - name: Configure the image
     command: |
       virt-customize -a {{ libvirt_pool_dir }}/{{ vm_name }}.qcow2 \
