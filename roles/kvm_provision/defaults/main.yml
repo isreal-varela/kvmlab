@@ -1,11 +1,11 @@
 ---
 # defaults file for kvm_provision
-base_image_name: rhel-9.3-x86_64-kvm.qcow2
-libvirt_pool_dir: "/home/yo_sup/VM"
+base_image_name: rocky9-template.img
+libvirt_pool_dir: "/srv/vmdisks"
 vm_name: rhel9.3-dev
 vm_vcpus: 2
 vm_ram_mb: 2048
 vm_net: br0 
 vm_root_pass: toor
-ssh_key: /home/yo_sup/.ssh/personal.pub
+ssh_key: "{{ lookup('env', 'HOME') }}/.ssh/personal.pub"
 

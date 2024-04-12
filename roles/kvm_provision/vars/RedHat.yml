@@ -1,0 +1,8 @@
+---
+kvm_prereq_pkgs:
+ - libguestfs-tools
+ - python3-libvirt
+ - virt-install
+ - libvirt-devel
+ - virt-manager
+ - virt-top
