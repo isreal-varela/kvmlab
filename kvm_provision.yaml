@@ -3,11 +3,11 @@
   gather_facts: yes
   become: yes
   vars:
-    pool_dir: "/home/yo_sup/VM"
+    pool_dir: "/srv/vmdisks"
     vcpus: 2
     ram_mb: 2048
     net: br0 
-    ssh_pub_key: "/home/yo_sup/.ssh/personal.pub"
+    ssh_pub_key: "/srv/keys/vm_key.pub"
 
   tasks:
     - name: KVM Provision role
