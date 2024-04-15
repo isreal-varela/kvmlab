@@ -1,54 +1,118 @@
 ---
-# tasks file for kvm_provision
-- name: Ensure requirements in place
-  package:
-    name:
-      - libguestfs-tools 
-      - guestfs-tools
-      - python3-libvirt
-      - virt-install
-        #- libvirt-devel
-      - virt-top
-      - virt-manager
-    state: present
-  become: yes
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_distribution }}.yml"
+
+# - name: Misc vars
+#   debug:
+#     var: "{{ item }}"
+#   with_items:
+#   - libvirt_pool_dir
+#   - ssh_pub_key
+#   - vmhome_dir
+
+# - name: Pause
+#   pause:
+#     seconds: 5
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# START: Pre-requisites block
+
+- name: Process pre-requisites
+  block:
+
+  - name: Pre-requisite package list
+    debug:
+      var: kvm_prereq_pkgs
+
+  - name: Ensure requirements in place
+    package:
+      name:
+      - "{{ kvm_prereq_pkgs }}"
+      # Look in roles/kvm_provision/vars/R*.yml files for list of packages
+      state: present
+    become: true
+
+  when: not( skip_prereqs | default(false) )
+
+# END: Pre-requisites block
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 - name: Get VMs list
+  become: true
   community.libvirt.virt:
     command: list_vms
   register: existing_vms
-  changed_when: no
+  changed_when: false
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# START: Create VM block
 
 - name: Create VM if not exists
   block:
+
+  - name: Show initial VM config variables
+    debug:
+      msg:
+      - "For 'vm_name' = '{{ vm_name }}', using the following initial parameters:"
+      - "  base_image_name: '{{ base_image_name }}'"
+      - " libvirt_pool_dir: '{{ libvirt_pool_dir}}'"
+      - "     ssh_key file: '{{ ssh_key }}'"
+      - "        vm_vcspus: {{ vm_vcpus }}"
+      - "        vm_ram_mb: {{ vm_ram_mb }}"
+      - "           vm_net: '{{ vm_net }}'"
+      - "     vm_root_pass: '{{ vm_root_pass }}'"
 
   - name: Copy base image to libvirt directory
     copy:
       dest: "{{ libvirt_pool_dir }}/{{ vm_name }}.qcow2"
       src: "{{ libvirt_pool_dir }}/{{ base_image_name }}"
-      force: no
-      remote_src: yes 
+      force: false
+      remote_src: true
       mode: 0666
     register: copy_results
 
+  ## TO-DO: Add ssh-inject for ansible user (key file /srv/keys/vm_key)
   - name: Configure the image
     command: |
       virt-customize -a {{ libvirt_pool_dir }}/{{ vm_name }}.qcow2 \
+<<<<<<< HEAD
       --hostname {{ vm_name }} \
       --root-password password:{{ vm_root_pass }} \
       --ssh-inject 'ansible:file:{{ ssh_key }}' \
       --run-command 'sed -i '/BLOCK_RPCS/s/^/#/g' /etc/sysconfig/qemu-ga' \
       --selinux-relabel
+=======
+         --hostname {{ vm_name }} \
+         --root-password password:{{ vm_root_pass }} \
+         --ssh-inject 'root:file:{{ ssh_key }}' \
+         --ssh-inject 'ansible:file:{{ ansible_user_ssh_key }}' \
+         --run-command 'sed -i '/BLOCK_RPCS/s/^/#/g' /etc/sysconfig/qemu-ga' \
+         --timezone UTC \
+         --echo-keys \
+         -v \
+         --selinux-relabel
+>>>>>>> main
     when: copy_results is changed
 
+#  - name: Output vm template xml
+#    template:
+#      src: "vm-template.xml.j2"
+#      dest: "/tmp/{{ vm_name }}.xml"
+#      mode: 0600
+
   - name: Define vm
+    become: true
     community.libvirt.virt:
       command: define
       xml: "{{ lookup('template', 'vm-template.xml.j2') }}"
 
-  when: "vm_name not in existing_vms.list_vms"
+  when: ( vm_name not in existing_vms.list_vms )
+
+# END: Create VM block
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 - name: Ensure VM is started
+  become: true
   community.libvirt.virt:
     name: "{{ vm_name }}"
     state: running
@@ -56,4 +120,3 @@
   until: "vm_start_results is success"
   retries: 15
   delay: 2
-
