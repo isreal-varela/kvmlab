@@ -3,11 +3,13 @@
   gather_facts: yes
   become: yes
   vars:
-    pool_dir: "/home/yo_sup/VM"
+    vmhome_dir: "{{ lookup('env', 'HOME') }}"
+    pool_dir: "{{ vmhome_dir }}/VM"
     vcpus: 2
     ram_mb: 2048
     net: br0 
-    ssh_pub_key: "/home/yo_sup/.ssh/personal.pub"
+    ssh_pub_key: "{{ vmhome_dir }}/.ssh/personal.pub"
+    ansible_user_ssh_key: "/srv/keys/vm_key.pub"
 
   tasks:
     - name: KVM Provision role
@@ -22,6 +24,6 @@
         cleanup_tmp: "{{ cleanup }}"
         ssh_key: "{{ ssh_pub_key }}"
       with_items:
-        - tang
-        - ipa1
+        #- tang
+        #- ipa1
         - gitlab
