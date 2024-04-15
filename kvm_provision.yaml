@@ -9,6 +9,7 @@
     ram_mb: 2048
     net: br0 
     ssh_pub_key: "{{ vmhome_dir }}/.ssh/personal.pub"
+    ansible_user_ssh_key: "/srv/keys/vm_key.pub"
 
   tasks:
     - name: KVM Provision role
