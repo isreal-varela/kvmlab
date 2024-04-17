@@ -75,13 +75,6 @@
   - name: Configure the image
     command: |
       virt-customize -a {{ libvirt_pool_dir }}/{{ vm_name }}.qcow2 \
-<<<<<<< HEAD
-      --hostname {{ vm_name }} \
-      --root-password password:{{ vm_root_pass }} \
-      --ssh-inject 'ansible:file:{{ ssh_key }}' \
-      --run-command 'sed -i '/BLOCK_RPCS/s/^/#/g' /etc/sysconfig/qemu-ga' \
-      --selinux-relabel
-=======
          --hostname {{ vm_name }} \
          --root-password password:{{ vm_root_pass }} \
          --ssh-inject 'root:file:{{ ssh_key }}' \
@@ -91,7 +84,6 @@
          --echo-keys \
          -v \
          --selinux-relabel
->>>>>>> main
     when: copy_results is changed
 
 #  - name: Output vm template xml
