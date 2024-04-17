@@ -7,7 +7,7 @@
     pool_dir: "{{ vmhome_dir }}/VM"
     vcpus: 2
     ram_mb: 2048
-    net: br0 
+    net: br0
     ssh_pub_key: "{{ vmhome_dir }}/.ssh/personal.pub"
     ansible_user_ssh_key: "/srv/keys/vm_key.pub"
 
