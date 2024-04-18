@@ -16,11 +16,11 @@ function ensure_dir_exists()
 
 ensure_dir_exists "~/.ansible/roles"
 
-ansible-galaxy collection install -r requirements.yaml
-#ansible-playbook kvm_provision.yaml
+ansible-galaxy collection install -r requirements.yml
+#ansible-playbook kvm_provision.yml
 
 #Uncomment to install additional systems as well
-#ansible-playbook kvm_provision.yaml --extra-vars "vm_name=ipa"
+#ansible-playbook kvm_provision.yml --extra-vars "vm_name=ipa"
 
 # BeetleD added below
-ansible-playbook -i gitlab, kvm_provision.yaml -vv -e "vm_name=gitlab" -e "ram_mb=4096" -e "skip_prereqs=true" -u ${USER}
+ansible-playbook -i gitlab, kvm_provision.yml -vv -e "vm_name=gitlab" -e "ram_mb=4096" -e "skip_prereqs=true" -u ${USER}
