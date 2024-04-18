@@ -25,7 +25,7 @@
           loop:
             "{{ vm_name }}"
 
-  always:
+      always:
         - name: Delete vm from disk
           file:
             path: "{{ libvirt_pool_dir }}/{{ item }}.qcow2"
