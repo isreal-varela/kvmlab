@@ -18,6 +18,6 @@
         vm_net: "{{ net }}"
         cleanup_tmp: "{{ cleanup }}"
       with_items:
-        #- tang
-        #- ipa1
+        - tang
+        - ipa1
         - gitlab

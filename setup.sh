@@ -25,4 +25,4 @@ ansible-galaxy collection install containers.podman
 #ansible-playbook kvm_provision.yml --extra-vars "vm_name=ipa"
 
 # BeetleD added below
-#ansible-playbook -i gitlab, kvm_provision.yml -vv -e "vm_name=gitlab" -e "ram_mb=4096" -e "skip_prereqs=true" -u ${USER}
+#ansible-playbook kvm_provision.yml -vv -u ${USER}
