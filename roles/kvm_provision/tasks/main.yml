@@ -68,7 +68,8 @@
       src: "{{ libvirt_pool_dir }}/{{ base_image_name }}"
       force: false
       remote_src: true
-      mode: 0666
+      group: libvirt
+      mode: 0600
     register: copy_results
 
   - name: Configure the image

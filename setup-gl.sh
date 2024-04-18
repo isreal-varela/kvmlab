@@ -8,4 +8,4 @@
 #ansible-playbook kvm_provision.yml --extra-vars "vm_name=ipa"
 
 # BeetleD added below
-ansible-playbook gl_provision.yml -vv -l lab02
+ansible-playbook gl_provision.yml -vv -l gitlab

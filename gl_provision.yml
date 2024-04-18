@@ -2,16 +2,16 @@
 - name: Dump
   hosts: 'gitlab'
 #  hosts: "{{ target|default('localhost') }}"
-  tasks:
-    - name: Facts
-      setup:
-      become: yes
-    - name: Dump
-      run_once: true
-      copy:
-        content: "{{ hostvars[inventory_hostname] | to_nice_json }}"
-        dest: /tmp/setup-dump.json
-      become: yes
+#  tasks:
+#    - name: Facts
+#      setup:
+#      become: yes
+#    - name: Dump
+#      run_once: true
+#      copy:
+#        content: "{{ hostvars[inventory_hostname] | to_nice_json }}"
+#        dest: /tmp/setup-dump.json
+#      become: yes
 - name: Use geerlinguy.gitlab role
   hosts: 'gitlab'
   become: yes
