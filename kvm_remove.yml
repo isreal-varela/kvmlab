@@ -3,8 +3,8 @@
   gather_facts: yes
   become: yes
   vars:
-    vm_name: 
-      - tang 
+    vm_name:
+      - tang
       - ipa1
       - gitlab
     libvirt_pool_dir: "/srv/vmdisks"
@@ -17,7 +17,7 @@
             command: destroy
           loop:
             "{{ vm_name }}"
-        
+
         - name: Remove KVM
           community.libvirt.virt:
             name: "{{ item }}"
@@ -25,11 +25,10 @@
           loop:
             "{{ vm_name }}"
 
-      always:
+  always:
         - name: Delete vm from disk
           file:
-            path:  "{{ libvirt_pool_dir }}/{{ item }}.qcow2"
+            path: "{{ libvirt_pool_dir }}/{{ item }}.qcow2"
             state: absent
           loop:
             "{{ vm_name }}"
-    

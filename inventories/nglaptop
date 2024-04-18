@@ -1,0 +1,19 @@
+# file: inventories/nglaptop
+[podmanhost]
+localhost
+
+[gitea_hosts]
+
+[containers:children]
+gitea_hosts
+
+#[all:vars]
+#ansible_python_interpreter= /usr/bin/python3
+
+[podmanhost:vars]
+ansible_connection=local
+ansible_python_interpreter= /usr/bin/python3
+
+[containers:vars]
+ansible_connection=podman
+ansible_python_interpreter=auto_silent

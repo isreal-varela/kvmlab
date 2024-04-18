@@ -8,7 +8,6 @@
 #   with_items:
 #   - libvirt_pool_dir
 #   - ssh_pub_key
-#   - vmhome_dir
 
 # - name: Pause
 #   pause:
@@ -56,7 +55,7 @@
       - "For 'vm_name' = '{{ vm_name }}', using the following initial parameters:"
       - "  base_image_name: '{{ base_image_name }}'"
       - " libvirt_pool_dir: '{{ libvirt_pool_dir}}'"
-      - "     ssh_key file: '{{ ssh_key }}'"
+      - "          ssh_key: '{{ ssh_key }}'"
       - "         vm_vcpus: {{ vm_vcpus }}"
       - "        vm_ram_mb: {{ vm_ram_mb }}"
       - "           vm_net: '{{ vm_net }}'"
@@ -86,12 +85,6 @@
          -v \
          --selinux-relabel
     when: copy_results is changed
-
-#  - name: Output vm template xml
-#    template:
-#      src: "vm-template.xml.j2"
-#      dest: "/tmp/{{ vm_name }}.xml"
-#      mode: 0600
 
   - name: Define vm
     become: true
