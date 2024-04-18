@@ -3,26 +3,20 @@
   gather_facts: yes
   become: yes
   vars:
-    vmhome_dir: "{{ lookup('env', 'HOME') }}"
-    pool_dir: "{{ vmhome_dir }}/VM"
     vcpus: 2
     ram_mb: 2048
     net: br0
-    ssh_pub_key: "{{ vmhome_dir }}/.ssh/personal.pub"
-    ansible_user_ssh_key: "/srv/keys/vm_key.pub"
 
   tasks:
     - name: KVM Provision role
       include_role:
         name: kvm_provision
       vars:
-        libvirt_pool_dir: "{{ pool_dir }}"
         vm_name: "{{ item }}"
         vm_vcpus: "{{ vcpus }}"
         vm_ram_mb: "{{ ram_mb }}"
         vm_net: "{{ net }}"
         cleanup_tmp: "{{ cleanup }}"
-        ssh_key: "{{ ssh_pub_key }}"
       with_items:
         #- tang
         #- ipa1

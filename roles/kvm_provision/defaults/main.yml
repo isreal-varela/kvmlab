@@ -1,6 +1,6 @@
 ---
 # defaults file for kvm_provision
-base_image_name: rocky9-template.img
+base_image_name: rocky9-template.qcow2
 libvirt_pool_dir: "/srv/vmdisks"
 vm_name: rhel9.3-dev
 vm_vcpus: 2
@@ -8,3 +8,4 @@ vm_ram_mb: 2048
 vm_net: br0
 vm_root_pass: toor
 ssh_key: "{{ lookup('env', 'HOME') }}/.ssh/personal.pub"
+ansible_user_ssh_key: "/srv/keys/vm_key.pub"
