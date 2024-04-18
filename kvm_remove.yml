@@ -32,3 +32,10 @@
             state: absent
           loop:
             "{{ vm_name }}"
+        - name: Undefine vm
+          community.libvirt.virt:
+            name: "{{ item }}"
+            command: undefine
+            force: true
+          loop:
+            "{{ vm_name }}"
