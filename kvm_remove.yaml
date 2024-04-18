@@ -4,9 +4,8 @@
   become: yes
   vars:
     vm_name: 
-      - tang 
+      - foo
       - ipa1
-      - gitlab
     libvirt_pool_dir: "/home/yo_sup/VM"
   tasks:
     - name: Attempt to stop and remove KVM
