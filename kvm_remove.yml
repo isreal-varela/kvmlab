@@ -3,10 +3,11 @@
   gather_facts: yes
   become: yes
   vars:
-    vm_name: 
-      - foo
+    vm_name:
+      - tang
       - ipa1
-    libvirt_pool_dir: "/home/yo_sup/VM"
+      - gitlab
+    libvirt_pool_dir: "/srv/vmdisks"
   tasks:
     - name: Attempt to stop and remove KVM
       block:
@@ -16,18 +17,25 @@
             command: destroy
           loop:
             "{{ vm_name }}"
-        
+
         - name: Remove KVM
           community.libvirt.virt:
             name: "{{ item }}"
             command: undefine
           loop:
             "{{ vm_name }}"
+
       always:
         - name: Delete vm from disk
           file:
-            path:  "{{ libvirt_pool_dir }}/{{ item }}.qcow2"
+            path: "{{ libvirt_pool_dir }}/{{ item }}.qcow2"
             state: absent
           loop:
             "{{ vm_name }}"
-    
+        - name: Undefine vm
+          community.libvirt.virt:
+            name: "{{ item }}"
+            command: undefine
+            force: true
+          loop:
+            "{{ vm_name }}"

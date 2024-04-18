@@ -1,0 +1,46 @@
+---
+- name: Dump
+  hosts: 'gitlab'
+#  hosts: "{{ target|default('localhost') }}"
+#  tasks:
+#    - name: Facts
+#      setup:
+#      become: yes
+#    - name: Dump
+#      run_once: true
+#      copy:
+#        content: "{{ hostvars[inventory_hostname] | to_nice_json }}"
+#        dest: /tmp/setup-dump.json
+#      become: yes
+- name: Use geerlinguy.gitlab role
+  hosts: 'gitlab'
+  become: yes
+  vars:
+    gitlab_domain: gitlab
+    gitlab_external_url: "https://{{ gitlab_domain }}"
+    gitlab_git_data_dir: "/opt/gitlab/git-data"
+    gitlab_backup_path: "/opt/gitlab/backups"
+    gitlab_edition: "gitlab-ee"
+    #gitlab_version: "16.9.2-ee.0.ei9"
+    #gitlab_version: "15.2.5"
+    gitlab_version: "16.10.2"
+    gitlab_config_template: "gitlab.rb.j2"
+    gitlab_redirect_http_to_https: true
+    gitlab_create_self_signed_certs: true
+    gitlab_self_signed_cert_subj: "/C=US/ST=VA/L=NoVa/O=IT/CN={{ gitlab_domain }}"
+    gitlab_letsencrypt_enable: false
+    gitlab_ldap_enabled: false
+    gitlab_ldap_servers:
+      - Name: 'main'
+        SrvrId: 'NG-GLAuth'
+        Host: 'ldapsrvr'
+        Port: 3893
+        Uid: 'uid'
+        Method: 'plain'
+        BindOn: 'cn=serviceuser,ou=svcaccts,dc=glauth,dc=com'
+        Password: 'mysecret'
+        Base: 'dc=glauth,dc=com'
+        TimeZone: 'UTC'
+        BackupKeepTime: '604800'
+  roles:
+    - {role: gitlab}

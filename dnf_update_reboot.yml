@@ -6,7 +6,7 @@
 
   - name: DNF update the system
     dnf:
-      name:  "*"
+      name: "*"
       state: latest
 
   - name: Install the latest version of yum-utils

@@ -44,7 +44,7 @@
     name: "{{ gitlab_package_name | default(gitlab_edition) }}"
     state: present
   async: 3000
-  poll: 20 
+  poll: 20
   when: not gitlab_file.stat.exists
 
 # Start and configure GitLab. Sometimes the first run fails, but after that,

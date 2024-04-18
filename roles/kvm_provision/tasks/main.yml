@@ -8,7 +8,6 @@
 #   with_items:
 #   - libvirt_pool_dir
 #   - ssh_pub_key
-#   - vmhome_dir
 
 # - name: Pause
 #   pause:
@@ -27,7 +26,7 @@
   - name: Ensure requirements in place
     package:
       name:
-      - "{{ kvm_prereq_pkgs }}"
+        "{{ kvm_prereq_pkgs }}"
       # Look in roles/kvm_provision/vars/R*.yml files for list of packages
       state: present
     become: true
@@ -56,23 +55,26 @@
       - "For 'vm_name' = '{{ vm_name }}', using the following initial parameters:"
       - "  base_image_name: '{{ base_image_name }}'"
       - " libvirt_pool_dir: '{{ libvirt_pool_dir}}'"
-      - "     ssh_key file: '{{ ssh_key }}'"
-      - "        vm_vcspus: {{ vm_vcpus }}"
+      - "          ssh_key: '{{ ssh_key }}'"
+      - "         vm_vcpus: {{ vm_vcpus }}"
       - "        vm_ram_mb: {{ vm_ram_mb }}"
       - "           vm_net: '{{ vm_net }}'"
       - "     vm_root_pass: '{{ vm_root_pass }}'"
 
   - name: Copy base image to libvirt directory
+    become: true
     copy:
       dest: "{{ libvirt_pool_dir }}/{{ vm_name }}.qcow2"
       src: "{{ libvirt_pool_dir }}/{{ base_image_name }}"
       force: false
       remote_src: true
-      mode: 0666
+      group: libvirt
+      mode: 0600
     register: copy_results
 
   ## TO-DO: Add ssh-inject for ansible user (key file /srv/keys/vm_key)
   - name: Configure the image
+    become: true
     command: |
       virt-customize -a {{ libvirt_pool_dir }}/{{ vm_name }}.qcow2 \
          --hostname {{ vm_name }} \
