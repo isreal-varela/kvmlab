@@ -7,7 +7,7 @@
       - tang 
       - ipa1
       - gitlab
-    libvirt_pool_dir: "/home/yo_sup/VM"
+    libvirt_pool_dir: "/srv/vmdisks"
   tasks:
     - name: Attempt to stop and remove KVM
       block:
@@ -24,6 +24,7 @@
             command: undefine
           loop:
             "{{ vm_name }}"
+
       always:
         - name: Delete vm from disk
           file:
