@@ -12,12 +12,15 @@
       include_role:
         name: kvm_provision
       vars:
-        vm_name: "{{ item }}"
+        vm_name: "{{ item.name }}"
         vm_vcpus: "{{ vcpus }}"
         vm_ram_mb: "{{ ram_mb }}"
         vm_net: "{{ net }}"
         cleanup_tmp: "{{ cleanup }}"
+        vm_mac: "{{ item.mac_addr }}"
       with_items:
-        - tang
-        - ipa1
-        - gitlab
+        - { name: "tang", mac_addr: "52:54:00:1e:5b:09" }
+        - { name: "ipa1", mac_addr: "52:54:00:d4:d2:a6" }
+        #- tang
+        #- ipa1
+        #- gitlab

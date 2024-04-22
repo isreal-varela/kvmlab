@@ -2,17 +2,6 @@
 - name: Include OS-specific variables.
   include_vars: "{{ ansible_distribution }}.yml"
 
-# - name: Misc vars
-#   debug:
-#     var: "{{ item }}"
-#   with_items:
-#   - libvirt_pool_dir
-#   - ssh_pub_key
-
-# - name: Pause
-#   pause:
-#     seconds: 5
-
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # START: Pre-requisites block
 
@@ -59,7 +48,12 @@
       - "         vm_vcpus: {{ vm_vcpus }}"
       - "        vm_ram_mb: {{ vm_ram_mb }}"
       - "           vm_net: '{{ vm_net }}'"
+      - "           vm_mac: '{{ vm_mac }}'"
       - "     vm_root_pass: '{{ vm_root_pass }}'"
+
+  - name: Pause
+    pause:
+      seconds: 5
 
   - name: Copy base image to libvirt directory
     become: true
