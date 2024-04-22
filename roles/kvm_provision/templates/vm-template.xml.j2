@@ -51,6 +51,7 @@
     <interface type="bridge">
       <source bridge="{{ vm_net }}"/>
       <model type="virtio"/>
+      <mac address="{{ vm_mac }}"/>
     </interface>
     <console type="pty"/>
     <channel type="unix">

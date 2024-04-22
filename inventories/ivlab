@@ -2,10 +2,15 @@
 [podmanhost]
 localhost
 
-[gitea_hosts]
+[tang_hosts]
+tang mac="52:54:00:1e:5b:09"
+
+[ipa_hosts]
+ipa1 mac="52:54:00:d4:d2:a"
 
 [containers:children]
-gitea_hosts
+tang_hosts
+ipa_hosts
 
 #[all:vars]
 #ansible_python_interpreter= /usr/bin/python3
