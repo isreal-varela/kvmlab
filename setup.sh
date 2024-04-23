@@ -17,7 +17,7 @@ function ensure_dir_exists()
 ensure_dir_exists "~/.ansible/roles"
 
 ansible-galaxy collection install -r requirements.yml
-ansible-galaxy collection install containers.podman
+#ansible-galaxy collection install containers.podman
 
 #ansible-playbook kvm_provision.yml
 
