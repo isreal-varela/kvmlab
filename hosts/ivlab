@@ -1,0 +1,30 @@
+# file: inventories/ivlab
+# [kvmhost]
+# localhost
+
+[tang_hosts]
+# tang mac="52:54:00:1e:5b:09"
+
+[ipa_hosts]
+# ipa1 mac="52:54:00:d4:d2:a"
+
+[kvms:children]
+tang_hosts
+ipa_hosts
+
+[kvms:vars]
+ansible_connection=ssh
+
+[containers:children]
+
+#[all:vars]
+#ansible_python_interpreter= /usr/bin/python3
+
+# [kvmhost:vars]
+# ansible_connection=local
+# ansible_python_interpreter=/usr/bin/python3
+# net=br0
+
+[containers:vars]
+ansible_connection=podman
+ansible_python_interpreter=auto_silent

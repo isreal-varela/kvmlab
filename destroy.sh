@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ansible-playbook -i gitlab, kvm_remove.yml -vv -u ${USER}
+ansible-playbook -i hosts/ivlab kvm_remove.yml -vv -u ${USER}

@@ -8,8 +8,8 @@
     ram_mb: 2048
     net: br0
     kvm_list:
-      - {name: "tang", mac_addr: "52:54:00:1e:5b:09"}
-      - {name: "ipa1", mac_addr: "52:54:00:d4:d2:a6"}
+      - {name: "tang", mac_addr: "52:54:00:1e:5b:09", ip_addr: "TBD", enabled: true, roles: ["tang_hosts"]}
+      - {name: "ipa1", mac_addr: "52:54:00:d4:d2:a6", ip_addr: "TBD", enabled: false, roles: ["ipa_hosts"]}
       # - {name: "vault", mac_addr: "52:54:00:d4:e3:cd"}
 
   tasks:
@@ -24,5 +24,47 @@
         vm_net: "{{ net }}"
         cleanup_tmp: "{{ cleanup }}"
         vm_mac: "{{ item.mac_addr }}"
+        vm_roles: "{{ item.roles | default([]) }}"
       with_items:
         - "{{ kvm_list }}"
+      # when: item.enabled | default(false) | bool
+
+- name: Tang role
+  hosts: tang_hosts
+  gather_facts: true
+  tasks:
+    - name: show the groups the host(s) are in
+      debug:
+        msg: "{{group_names}}"
+    - name: hostvars[inventory_hostname].ansible_facts
+      debug:
+        var: hostvars[inventory_hostname].ansible_facts
+    - name: Ping tang
+      ping:
+    - name: Process 'tang_hosts' servers
+      debug:
+        msg: "The deployed kvm ('{{ inventory_hostname }}')"
+      # with_items:
+      #  - "{{ kvm_list }}"
+      # when:
+      #   - item.enabled | default(false) | bool
+
+- name: IPA role
+  hosts: ipa_hosts
+  gather_facts: true
+  tasks:
+    - name: show the groups the host(s) are in
+      debug:
+        msg: "{{group_names}}"
+    - name: hostvars[inventory_hostname].ansible_facts
+      debug:
+        var: hostvars[inventory_hostname].ansible_facts
+    - name: Ping ipa1
+      ping:
+    - name: Process 'ipa_hosts' servers
+      debug:
+        msg: "The deployed kvm ('{{ inventory_hostname }}')"
+      # with_items:
+      #  - "{{ kvm_list }}"
+      # when:
+      #  - item.enabled | default(false) | bool
