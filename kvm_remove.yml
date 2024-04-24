@@ -1,7 +1,8 @@
+---
 - name: Remove VM Lab
   hosts: localhost
-  gather_facts: yes
-  become: yes
+  gather_facts: true
+  become: true
   vars:
     vm_name:
       - tang
