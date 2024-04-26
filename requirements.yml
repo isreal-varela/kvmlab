@@ -3,3 +3,10 @@ collections:
   # Install vmware collection
   - community.libvirt
   - community.general
+
+roles:
+  # Install individual roles
+  - linux-system-roles.firewall
+  - linux-system-roles.nbde_server
+  - linux-system-roles.nbde_client
+
