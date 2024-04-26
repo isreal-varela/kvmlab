@@ -12,7 +12,7 @@ vm_net: br0
 vm_mac: 54:42:00:00:ff:ff
 vm_root_pass: toor
 ansible_user_ssh_key: "/srv/keys/vm_key.pub"
-ip_addr: 192.168.100.40
+ip_addr: 192.168.100.39
 subnet: 24
 gateway: 192.168.100.1
 dns1: 8.8.8.8
