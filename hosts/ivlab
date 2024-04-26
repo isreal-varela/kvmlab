@@ -1,6 +1,4 @@
 # file: inventories/ivlab
-# [kvmhost]
-# localhost
 
 [tang_hosts]
 # tang mac="52:54:00:1e:5b:09"
@@ -17,8 +15,8 @@ ansible_connection=ssh
 
 [containers:children]
 
-#[all:vars]
-#ansible_python_interpreter= /usr/bin/python3
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
 
 # [kvmhost:vars]
 # ansible_connection=local
@@ -28,3 +26,12 @@ ansible_connection=ssh
 [containers:vars]
 ansible_connection=podman
 ansible_python_interpreter=auto_silent
+
+# -- Test config below for Tang/Clevis 
+#     - per https://fedoramagazine.org/using-linux-system-roles-to-implement-clevis-and-tang-for-automated-luks-volume-unlocking/
+
+[nbde_servers]
+tang
+
+[nbde_clients]
+ipa1

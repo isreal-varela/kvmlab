@@ -8,8 +8,8 @@
     ram_mb: 2048
     net: br0
     kvm_list:
-      - {name: "tang", mac_addr: "52:54:00:1e:5b:09", ip_addr: "TBD", enabled: true, roles: ["tang_hosts"]}
-      - {name: "ipa1", mac_addr: "52:54:00:d4:d2:a6", ip_addr: "TBD", enabled: false, roles: ["ipa_hosts"]}
+      - {name: "tang", mac_addr: "52:54:00:1e:5b:09", ip_addr: "TBD", enabled: true, roles: ["tang_hosts","nbde_servers"]}
+      - {name: "ipa1", mac_addr: "52:54:00:d4:d2:a6", ip_addr: "TBD", enabled: false, roles: ["ipa_hosts","nbde_clients"]}
       # - {name: "vault", mac_addr: "52:54:00:d4:e3:cd"}
 
   tasks:
@@ -29,6 +29,9 @@
         - "{{ kvm_list }}"
       # when: item.enabled | default(false) | bool
 
+- name: Include a play for NBDE Servers/clients
+  ansible.builtin.import_playbook: nbde.yml
+
 - name: Tang role
   hosts: tang_hosts
   gather_facts: true
@@ -44,10 +47,6 @@
     - name: Process 'tang_hosts' servers
       debug:
         msg: "The deployed kvm ('{{ inventory_hostname }}')"
-      # with_items:
-      #  - "{{ kvm_list }}"
-      # when:
-      #   - item.enabled | default(false) | bool
 
 - name: IPA role
   hosts: ipa_hosts
@@ -64,7 +63,3 @@
     - name: Process 'ipa_hosts' servers
       debug:
         msg: "The deployed kvm ('{{ inventory_hostname }}')"
-      # with_items:
-      #  - "{{ kvm_list }}"
-      # when:
-      #  - item.enabled | default(false) | bool
