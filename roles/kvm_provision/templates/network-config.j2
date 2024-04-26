@@ -1,0 +1,16 @@
+#cloud-config
+
+network:
+  version: 1
+  config:
+    - type: physical
+      name: enp1s0
+      subnets:
+        - type: static
+          address: {{ ip_addr }}/{{ subnet }}
+          gateway: {{ gateway }}
+          dns_nameservers:
+            - {{ dns1 }}
+            - {{ dns2 }}
+          dns_search:
+            - {{ dns_search }}
