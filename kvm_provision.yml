@@ -8,9 +8,9 @@
     ram_mb: 2048
     net: br0
     kvm_list:
-      - {name: "tang", mac_addr: "52:54:00:1e:5b:09", ip_addr: "TBD", enabled: true, roles: ["tang_hosts","nbde_servers"]}
-      - {name: "ipa1", mac_addr: "52:54:00:d4:d2:a6", ip_addr: "TBD", enabled: false, roles: ["ipa_hosts","nbde_clients"]}
-      # - {name: "vault", mac_addr: "52:54:00:d4:e3:cd"}
+      - {name: "tang", ip_addr: "192.168.100.41", enabled: true, roles: ["tang_hosts","nbde_servers"]}
+      - {name: "ipa1", ip_addr: "192.168.100.40", enabled: false, roles: ["ipa_hosts","nbde_clients"]}
+      # - {name: "vault", ip_addr: "192.168.100.42"}
 
   tasks:
     - name: KVM Provision role
@@ -23,7 +23,7 @@
         vm_ram_mb: "{{ ram_mb }}"
         vm_net: "{{ net }}"
         cleanup_tmp: "{{ cleanup }}"
-        vm_mac: "{{ item.mac_addr }}"
+        vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_roles: "{{ item.roles | default([]) }}"
       with_items:
         - "{{ kvm_list }}"
@@ -31,6 +31,8 @@
 
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
+  vars:
+    remote_user: ansible
 
 - name: Tang role
   hosts: tang_hosts

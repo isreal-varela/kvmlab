@@ -1,5 +1,5 @@
 <domain type="kvm">
-  <name>{{ vm_name}}</name>
+  <name>{{ vm_name }}</name>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
       <libosinfo:os id="http://redhat.com/rhel/9.3"/>
@@ -32,6 +32,15 @@
       <source file="{{ libvirt_pool_dir }}/{{ vm_name }}.qcow2"/>
       <target dev="vda" bus="virtio"/>
     </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw' discard='unmap'/>
+      <source file='{{ libvirt_pool_dir }}/{{ vm_name }}.iso' index='2'/>
+      <backingStore/>
+      <target dev='sda' bus='scsi'/>
+      <readonly/>
+      <alias name='scsi0-0-0-0'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+    </disk>
     <controller type="usb" model="qemu-xhci" ports="15"/>
     <controller type="pci" model="pcie-root"/>
     <controller type="pci" model="pcie-root-port"/>
@@ -51,13 +60,6 @@
     <interface type="bridge">
       <source bridge="{{ vm_net }}"/>
       <model type="virtio"/>
-      {% if vm_item_name != vm_name %}
-      <!--   Condition #1 {{ vm_item_name }}, {{ vm_name }} -->
-      <mac address="{{ '52:54:00' | community.general.random_mac(seed=vm_name) }}"/>
-      {% else %}
-      <!--   Condition #2 {{ vm_item_name }}, {{ vm_name }} -->
-      <mac address="{{ vm_mac }}"/>
-      {% endif %}
     </interface>
     <console type="pty"/>
     <channel type="unix">

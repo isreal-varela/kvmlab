@@ -3,9 +3,18 @@
 base_image_name: rocky9-template.qcow2
 libvirt_pool_dir: "/srv/vmdisks"
 vm_name: rhel9.3-dev
-vm_vcpus: 2
+cloud_init_user_data: "{{ libvirt_pool_dir }}/user-data"
+cloud_init_meta_data: "{{ libvirt_pool_dir }}/meta-data"
+cloud_init_network_config: "{{ libvirt_pool_dir }}/network-config"
+vm_vcpus: 4
 vm_ram_mb: 2048
 vm_net: br0
-vm_mac: 54:42:00:00:ff:ff
 vm_root_pass: toor
 ansible_user_ssh_key: "/srv/keys/vm_key.pub"
+ip_addr: 192.168.100.40
+subnet: 24
+gateway: 192.168.100.1
+dns1: 8.8.8.8
+dns2: 1.1.1.1
+dns_search: foo.com
+dns_name: ape.test

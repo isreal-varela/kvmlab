@@ -49,17 +49,17 @@
           - "              vm_vcpus: {{ vm_vcpus }}"
           - "             vm_ram_mb: {{ vm_ram_mb }}"
           - "                vm_net: '{{ vm_net }}'"
-          - "                vm_mac: '{{ vm_mac }}'"
+          - "            vm_ip_addr: {{ vm_ip_addr }}"
           - "          vm_root_pass: '{{ vm_root_pass }}'"
           - "              vm_roles: '{{ vm_roles }}'"
 
-    - name: Check for adhoc 'vm_name'
-      debug:
-        msg:
-          - "Values not equal 'vm_item_name' vs 'vm_name'."
-          - "                 '{{ vm_item_name }}' vs '{{ vm_name }}'."
-          - "VM template should generate random mac address and not use above."
-      when: vm_item_name != vm_name
+    #- name: Check for adhoc 'vm_name'
+    #  debug:
+    #    msg:
+    #      - "Values not equal 'vm_item_name' vs 'vm_name'."
+    #      - "                 '{{ vm_item_name }}' vs '{{ vm_name }}'."
+    #      - "VM template should generate random mac address and not use above."
+    #  when: vm_item_name != vm_name
 
     - name: Copy base image to libvirt directory
       become: true
@@ -78,6 +78,21 @@
         virt-customize -a {{ libvirt_pool_dir }}/{{ vm_name }}.qcow2 \
            --hostname {{ vm_name }}
       when: copy_results is changed
+
+    - name: Copy cloud-init meta data
+      template: "src=meta-data.j2 dest={{ cloud_init_meta_data }} mode=0777"
+      become: true
+    - name: Copy cloud-init user data
+      template: "src=user-data.j2 dest={{ cloud_init_user_data }} mode=0777"
+      become: true
+    - name: Copy cloud-init network config
+      template: "src=network-config.j2 dest={{ cloud_init_network_config }} mode=0777"
+      become: true
+
+    - name: Configure the cloud-init iso
+      become: true
+      command: |
+        genisoimage -output {{ libvirt_pool_dir }}/{{ vm_name }}.iso -V cidata -r -J {{ cloud_init_user_data }} {{ cloud_init_meta_data }} {{ cloud_init_network_config }}
 
     - name: Define vm
       become: true
