@@ -1,15 +1,29 @@
-#!/bin/bash
+#!/bin/bash +x
 
-mkdir ~/.ansible/roles
-ansible-galaxy collection install -r requirements.yaml
-#ansible-playbook kvm_provision.yaml
+function ensure_dir_exists()
+{
+  for dir in "$*"
+  {
+    if [[ ! -e $dir ]]; then
+      mkdir -p $dir
+      exit $?
+    elif [[ ! -d $dir ]]; then
+      echo "$dir already exists but is not a directory" 1>&2
+      exit 1
+    fi
+  }
+}
+
+ensure_dir_exists "~/.ansible/roles"
+
+ansible-galaxy collection install -r requirements.yml
+#ansible-galaxy collection install containers.podman
+
+#ansible-playbook kvm_provision.yml
 
 #Uncomment to install additional systems as well
-#ansible-playbook kvm_provision.yaml --extra-vars "vm_name=ipa"
+#ansible-playbook kvm_provision.yml --extra-vars "vm_name=ipa"
+
 # BeetleD added below
-#ansible-playbook -i beetled-ng, kvm_provision.yaml -vvvv -e "vm_name=test"
-#rm -f ~/VM/test.qcow2
-#ansible-playbook -i kvmtest, kvm_provision.yaml -vv -e "vm_name=gitlab" -e "ram_mb=4096" -e "skip_prereqs=true" -u beetled
-#ansible-playbook -i kvmtest, kvm_provision.yaml -vv -e "vm_name=gitlab" -e "ram_mb=4096" -e "skip_prereqs=true" -e "base_image_name=rhel-9.3-x86_64-kvm.qcow2" -u beetled
-#ansible-playbook -i kvmtest, kvm_provision.yaml -vv -e "vm_name=gitlab" -e "ram_mb=4096" -e "skip_prereqs=true" -e "base_image_name=rocky9-template.img" -e "libvirt_pool_dir=/srv/vmdisks" -u beetled
-ansible-playbook -i gitlab, kvm_provision.yaml -vv -e "vm_name=gitlab" -e "ram_mb=4096" -e "skip_prereqs=true" -e "pool_dir=/srv/vmdisks" -u beetled
+ansible-playbook -i hosts/ivlab kvm_provision.yml -vv -u ${USER} --ask-vault-pass
+#ansible-playbook -i hosts/nglaptop kvm_provision.yml -vv -u ${USER} -e "skip_prereqs=true" -e "net=virbr0" --ask-vault-pass

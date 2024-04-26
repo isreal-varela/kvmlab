@@ -1,0 +1,65 @@
+---
+- name: Deploys VM based on cloud image
+  hosts: localhost
+  gather_facts: true
+  become: true
+  vars:
+    vcpus: 2
+    ram_mb: 2048
+    net: br0
+    kvm_list:
+      - {name: "tang", mac_addr: "52:54:00:1e:5b:09", ip_addr: "TBD", enabled: true, roles: ["tang_hosts","nbde_servers"]}
+      - {name: "ipa1", mac_addr: "52:54:00:d4:d2:a6", ip_addr: "TBD", enabled: false, roles: ["ipa_hosts","nbde_clients"]}
+      # - {name: "vault", mac_addr: "52:54:00:d4:e3:cd"}
+
+  tasks:
+    - name: KVM Provision role
+      include_role:
+        name: kvm_provision
+      vars:
+        vm_item_name: "{{ item.name }}"
+        vm_name: "{{ item.name }}"
+        vm_vcpus: "{{ vcpus }}"
+        vm_ram_mb: "{{ ram_mb }}"
+        vm_net: "{{ net }}"
+        cleanup_tmp: "{{ cleanup }}"
+        vm_mac: "{{ item.mac_addr }}"
+        vm_roles: "{{ item.roles | default([]) }}"
+      with_items:
+        - "{{ kvm_list }}"
+      # when: item.enabled | default(false) | bool
+
+- name: Include a play for NBDE Servers/clients
+  ansible.builtin.import_playbook: nbde.yml
+
+- name: Tang role
+  hosts: tang_hosts
+  gather_facts: true
+  tasks:
+    - name: show the groups the host(s) are in
+      debug:
+        msg: "{{group_names}}"
+    - name: hostvars[inventory_hostname].ansible_facts
+      debug:
+        var: hostvars[inventory_hostname].ansible_facts
+    - name: Ping tang
+      ping:
+    - name: Process 'tang_hosts' servers
+      debug:
+        msg: "The deployed kvm ('{{ inventory_hostname }}')"
+
+- name: IPA role
+  hosts: ipa_hosts
+  gather_facts: true
+  tasks:
+    - name: show the groups the host(s) are in
+      debug:
+        msg: "{{group_names}}"
+    - name: hostvars[inventory_hostname].ansible_facts
+      debug:
+        var: hostvars[inventory_hostname].ansible_facts
+    - name: Ping ipa1
+      ping:
+    - name: Process 'ipa_hosts' servers
+      debug:
+        msg: "The deployed kvm ('{{ inventory_hostname }}')"
