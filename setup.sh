@@ -25,4 +25,5 @@ ansible-galaxy collection install -r requirements.yml
 #ansible-playbook kvm_provision.yml --extra-vars "vm_name=ipa"
 
 # BeetleD added below
-#ansible-playbook kvm_provision.yml -vv -u ${USER}
+ansible-playbook -i hosts/ivlab kvm_provision.yml -vv -u ${USER} --ask-vault-pass
+#ansible-playbook -i hosts/nglaptop kvm_provision.yml -vv -u ${USER} -e "skip_prereqs=true" -e "net=virbr0" --ask-vault-pass

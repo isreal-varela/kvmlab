@@ -51,17 +51,15 @@
           - "                vm_net: '{{ vm_net }}'"
           - "                vm_mac: '{{ vm_mac }}'"
           - "          vm_root_pass: '{{ vm_root_pass }}'"
+          - "              vm_roles: '{{ vm_roles }}'"
 
-    - debug:
+    - name: Check for adhoc 'vm_name'
+      debug:
         msg:
           - "Values not equal 'vm_item_name' vs 'vm_name'."
           - "                 '{{ vm_item_name }}' vs '{{ vm_name }}'."
           - "VM template should generate random mac address and not use above."
       when: vm_item_name != vm_name
-
-    - name: Pause
-      pause:
-        seconds: 5
 
     - name: Copy base image to libvirt directory
       become: true
@@ -101,3 +99,8 @@
   until: "vm_start_results is success"
   retries: 15
   delay: 2
+
+- name: Add host to specified groups (based on roles)
+  ansible.builtin.add_host:
+    hostname: "{{ vm_name }}"
+    groups: "{{ vm_roles }}"
