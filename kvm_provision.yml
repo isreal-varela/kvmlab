@@ -31,8 +31,6 @@
 
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
-  vars:
-    remote_user: ansible
 
 - name: Tang role
   hosts: tang_hosts
