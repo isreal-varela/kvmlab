@@ -14,7 +14,7 @@ function ensure_dir_exists()
   }
 }
 
-ensure_dir_exists "~/.ansible/roles"
+ensure_dir_exists ${HOME}/.ansible/roles
 
 ansible-galaxy collection install -r requirements.yml
 ansible-galaxy role       install -r requirements.yml
@@ -23,8 +23,8 @@ ansible-galaxy role       install -r requirements.yml
 #ansible-playbook kvm_provision.yml
 
 #Uncomment to install additional systems as well
-#ansible-playbook kvm_provision.yml --extra-vars "vm_name=ipa"
+#ansible-playbook kvm_provision.yml --extra-vars 'vm_name=ipa'
 
 # BeetleD added below
 ansible-playbook -i hosts/ivlab kvm_provision.yml -vv -u ${USER} --ask-vault-pass
-#ansible-playbook -i hosts/nglaptop kvm_provision.yml -vv -u ${USER} -e "skip_prereqs=true" -e "net=virbr0" --ask-vault-pass
+#ansible-playbook -i hosts/nglaptop kvm_provision.yml -vv -u ${USER} -e 'skip_prereqs=true' -e 'net=virbr0' --ask-vault-pass
