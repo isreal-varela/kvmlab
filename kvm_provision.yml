@@ -2,7 +2,7 @@
 - name: Deploys VM based on cloud image
   hosts: localhost
   gather_facts: true
-  become: true
+  become: false
   vars:
     vcpus: 2
     ram_mb: 2048

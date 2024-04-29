@@ -11,4 +11,4 @@ nbde_client_bindings:
           37616137643130393037353564366661353834623566353132316266346662356563
     servers:
       #- http://192.168.122.34
-      - http://tang
+      - http://tang.ape.test

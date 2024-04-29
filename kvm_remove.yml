@@ -2,7 +2,7 @@
 - name: Remove VM Lab
   hosts: localhost
   gather_facts: true
-  become: true
+  become: false
   vars:
     vm_name:
       - tang
@@ -27,6 +27,7 @@
 
       always:
         - name: Delete vm from disk
+          become: true
           file:
             path: "{{ libvirt_pool_dir }}/{{ item }}.qcow2"
             state: absent
