@@ -8,26 +8,33 @@
     ram_mb: 2048
     net: br0
     kvm_list:
-      - {name: "tang", ip_addr: "192.168.100.41", enabled: true, roles: ["tang_hosts","nbde_servers"]}
-      - {name: "ipa1", ip_addr: "192.168.100.40", enabled: false, roles: ["ipa_hosts","nbde_clients"]}
-      # - {name: "vault", ip_addr: "192.168.100.42"}
+      - {name: "tang",       ip_addr: "192.168.100.41", enabled: true,  roles: ["tang_hosts","nbde_servers"], ram_mb: 3072}
+      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_hosts","nbde_clients"], cpus: 4, ram_mb: 4096}
+      - {name: "vault",      ip_addr: "192.168.100.42", enabled: true,  roles: ["vault", "nbde_clients"]}
+      - {name: "logger",     ip_addr: "192.168.100.43", enabled: true,  roles: ["logger", "nbde_clients"]}
+      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman", "nbde_clients"], cpus: 1}
+      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: false, roles: ["registry", "nbde_clients"]}
 
   tasks:
+
+    - name: Test
+      debug:
+        var: ansible_facts
+
     - name: KVM Provision role
       include_role:
         name: kvm_provision
       vars:
         vm_item_name: "{{ item.name }}"
         vm_name: "{{ item.name }}"
-        vm_vcpus: "{{ vcpus }}"
-        vm_ram_mb: "{{ ram_mb }}"
-        vm_net: "{{ net }}"
+        vm_vcpus: "{{ item.cpus | default(vcpus) }}"
+        vm_ram_mb: "{{ item.ram_mb | default(ram_mb) }}"
+        vm_net: "{{ item.net | default(net) }}"
         cleanup_tmp: "{{ cleanup }}"
         vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_roles: "{{ item.roles | default([]) }}"
       with_items:
-        - "{{ kvm_list }}"
-      # when: item.enabled | default(false) | bool
+        - '{{ kvm_list | selectattr("enabled") | list }}'
 
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
@@ -63,3 +70,4 @@
     - name: Process 'ipa_hosts' servers
       debug:
         msg: "The deployed kvm ('{{ inventory_hostname }}')"
+

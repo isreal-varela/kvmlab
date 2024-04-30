@@ -119,3 +119,11 @@
   ansible.builtin.add_host:
     hostname: "{{ vm_name }}"
     groups: "{{ vm_roles }}"
+
+- name: Update KVM HOST /etc/hosts file
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '{{ vm_name }}.{{ dns_name }}'
+    line: '{{ vm_ip_addr }}   {{ vm_name }}.{{ dns_name }} {{ vm_name }}'
+    state: present
+  become: true

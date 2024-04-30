@@ -7,7 +7,10 @@
     vm_name:
       - tang
       - ipa1
-      # - vault
+      - vault
+      - logger
+      - foreman
+      - mirror-reg
     libvirt_pool_dir: "/srv/vmdisks"
   tasks:
     - name: Attempt to stop and remove KVM
