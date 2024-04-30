@@ -11,6 +11,7 @@
     - name: Pre-requisite package list
       debug:
         var: kvm_prereq_pkgs
+        verbosity: 2
 
     - name: Ensure requirements in place
       package:
@@ -52,14 +53,7 @@
           - "            vm_ip_addr: {{ vm_ip_addr }}"
           - "          vm_root_pass: '{{ vm_root_pass }}'"
           - "              vm_roles: '{{ vm_roles }}'"
-
-    #- name: Check for adhoc 'vm_name'
-    #  debug:
-    #    msg:
-    #      - "Values not equal 'vm_item_name' vs 'vm_name'."
-    #      - "                 '{{ vm_item_name }}' vs '{{ vm_name }}'."
-    #      - "VM template should generate random mac address and not use above."
-    #  when: vm_item_name != vm_name
+        verbosity: 0
 
     - name: Copy base image to libvirt directory
       become: true

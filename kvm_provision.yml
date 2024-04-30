@@ -8,18 +8,23 @@
     ram_mb: 2048
     net: br0
     kvm_list:
-      - {name: "tang",       ip_addr: "192.168.100.41", enabled: true,  roles: ["tang_hosts","nbde_servers"], ram_mb: 3072}
-      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_hosts","nbde_clients"], cpus: 4, ram_mb: 4096}
-      - {name: "vault",      ip_addr: "192.168.100.42", enabled: true,  roles: ["vault", "nbde_clients"]}
-      - {name: "logger",     ip_addr: "192.168.100.43", enabled: true,  roles: ["logger", "nbde_clients"]}
-      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman", "nbde_clients"], cpus: 1}
-      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: false, roles: ["registry", "nbde_clients"]}
+      - {name: "tang",       ip_addr: "192.168.100.41", enabled: true,  roles: ["tang_host",     "nbde_servers"], ram_mb: 3072}
+      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients"], cpus: 4, ram_mb: 4096}
+      - {name: "vault",      ip_addr: "192.168.100.42", enabled: false, roles: ["vault_host",    "nbde_clients"]}
+      - {name: "logger",     ip_addr: "192.168.100.43", enabled: false, roles: ["logger_host",   "nbde_clients"]}
+      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients"], cpus: 1}
+      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: false, roles: ["registry_host", "nbde_clients"]}
 
   tasks:
-
-    - name: Test
-      debug:
-        var: ansible_facts
+    - name: Add/update full KVM host /etc/hosts file entries
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '{{ item.name }}.{{ dns_name }}'
+        line: '{{ item.ip_addr | default(ip_addr) }}   {{ item.name }}.{{ dns_name }} {{ item.name }}'
+        state: present
+      become: true
+      with_items:
+        - '{{ kvm_list | selectattr("enabled") | list }}'
 
     - name: KVM Provision role
       include_role:
@@ -40,34 +45,38 @@
   ansible.builtin.import_playbook: nbde.yml
 
 - name: Tang role
-  hosts: tang_hosts
+  hosts: tang_host
   gather_facts: true
   tasks:
     - name: show the groups the host(s) are in
       debug:
         msg: "{{group_names}}"
+        verbosity: 2
     - name: hostvars[inventory_hostname].ansible_facts
       debug:
         var: hostvars[inventory_hostname].ansible_facts
+        verbosity: 3
     - name: Ping tang
       ping:
-    - name: Process 'tang_hosts' servers
+    - name: Process 'tang_host' servers
       debug:
         msg: "The deployed kvm ('{{ inventory_hostname }}')"
 
 - name: IPA role
-  hosts: ipa_hosts
+  hosts: ipa_host
   gather_facts: true
   tasks:
     - name: show the groups the host(s) are in
       debug:
         msg: "{{group_names}}"
+        verbosity: 2
     - name: hostvars[inventory_hostname].ansible_facts
       debug:
         var: hostvars[inventory_hostname].ansible_facts
+        verbosity: 3
     - name: Ping ipa1
       ping:
-    - name: Process 'ipa_hosts' servers
+    - name: Process 'ipa_host' servers
       debug:
         msg: "The deployed kvm ('{{ inventory_hostname }}')"
 
