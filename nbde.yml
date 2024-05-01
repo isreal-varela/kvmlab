@@ -1,14 +1,14 @@
 - name: Open firewall for Tang
   hosts: nbde_servers
   roles:
-    - linux-system-roles.firewall
+    - fedora.linux_system_roles.firewall
 
 - name: Deploy NBDE Tang server
   hosts: nbde_servers
   roles:
-    - linux-system-roles.nbde_server
+    - fedora.linux_system_roles.nbde_server
 
 - name: Deploy NBDE Clevis clients
   hosts: nbde_clients
   roles:
-    - linux-system-roles.nbde_client
+    - fedora.linux_system_roles.nbde_client

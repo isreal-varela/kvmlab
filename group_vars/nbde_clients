@@ -1,4 +1,4 @@
-nbde_client_bindings:
+DUMMY_nbde_client_bindings:
   - device: /dev/vda2
 #    encryption_password: TEST_VAULT_TANG_PWD
 #    Vault pwd: P@ssword1234 - actual clear-text value TEST_VAULT_TANG_PWD
@@ -10,5 +10,5 @@ nbde_client_bindings:
           6434663866373439630a376662623065666338343466373931653231326266326433326137313965
           37616137643130393037353564366661353834623566353132316266346662356563
     servers:
-      #- http://192.168.122.34
-      - http://tang
+      # - http://tang.ape.test
+      - http://192.168.100.41

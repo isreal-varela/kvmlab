@@ -17,6 +17,7 @@ ansible_connection=ssh
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 # [kvmhost:vars]
 # ansible_connection=local
@@ -31,7 +32,7 @@ ansible_python_interpreter=auto_silent
 #     - per https://fedoramagazine.org/using-linux-system-roles-to-implement-clevis-and-tang-for-automated-luks-volume-unlocking/
 
 [nbde_servers]
-tang
+#tang
 
 [nbde_clients]
-ipa1
+#ipa1

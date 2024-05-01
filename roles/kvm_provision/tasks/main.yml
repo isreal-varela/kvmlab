@@ -11,6 +11,7 @@
     - name: Pre-requisite package list
       debug:
         var: kvm_prereq_pkgs
+        verbosity: 2
 
     - name: Ensure requirements in place
       package:
@@ -49,17 +50,10 @@
           - "              vm_vcpus: {{ vm_vcpus }}"
           - "             vm_ram_mb: {{ vm_ram_mb }}"
           - "                vm_net: '{{ vm_net }}'"
-          - "                vm_mac: '{{ vm_mac }}'"
+          - "            vm_ip_addr: {{ vm_ip_addr }}"
           - "          vm_root_pass: '{{ vm_root_pass }}'"
           - "              vm_roles: '{{ vm_roles }}'"
-
-    - name: Check for adhoc 'vm_name'
-      debug:
-        msg:
-          - "Values not equal 'vm_item_name' vs 'vm_name'."
-          - "                 '{{ vm_item_name }}' vs '{{ vm_name }}'."
-          - "VM template should generate random mac address and not use above."
-      when: vm_item_name != vm_name
+        verbosity: 0
 
     - name: Copy base image to libvirt directory
       become: true
@@ -81,14 +75,14 @@
 
     - name: Copy cloud-init meta data
       template: "src=meta-data.j2 dest={{ cloud_init_meta_data }} mode=0777"
-      become: yes
+      become: true
     - name: Copy cloud-init user data
       template: "src=user-data.j2 dest={{ cloud_init_user_data }} mode=0777"
-      become: yes
+      become: true
     - name: Copy cloud-init network config
       template: "src=network-config.j2 dest={{ cloud_init_network_config }} mode=0777"
-      become: yes
-  
+      become: true
+
     - name: Configure the cloud-init iso
       become: true
       command: |
@@ -119,3 +113,11 @@
   ansible.builtin.add_host:
     hostname: "{{ vm_name }}"
     groups: "{{ vm_roles }}"
+
+- name: Update KVM HOST /etc/hosts file
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '{{ vm_name }}.{{ dns_name }}'
+    line: '{{ vm_ip_addr }}   {{ vm_name }}.{{ dns_name }} {{ vm_name }}'
+    state: present
+  become: true

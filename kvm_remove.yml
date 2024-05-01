@@ -2,12 +2,15 @@
 - name: Remove VM Lab
   hosts: localhost
   gather_facts: true
-  become: true
+  become: false
   vars:
     vm_name:
       - tang
       - ipa1
-      # - vault
+      - vault
+      - logger
+      - foreman
+      - mirror-reg
     libvirt_pool_dir: "/srv/vmdisks"
   tasks:
     - name: Attempt to stop and remove KVM
@@ -27,6 +30,7 @@
 
       always:
         - name: Delete vm from disk
+          become: true
           file:
             path: "{{ libvirt_pool_dir }}/{{ item }}.qcow2"
             state: absent

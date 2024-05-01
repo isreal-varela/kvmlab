@@ -2,64 +2,90 @@
 - name: Deploys VM based on cloud image
   hosts: localhost
   gather_facts: true
-  become: true
+  become: false
   vars:
     vcpus: 2
     ram_mb: 2048
     net: br0
     kvm_list:
-      - {name: "tang", mac_addr: "52:54:00:1e:5b:09", ip_addr: "TBD", enabled: true, roles: ["tang_hosts","nbde_servers"]}
-      - {name: "ipa1", mac_addr: "52:54:00:d4:d2:a6", ip_addr: "TBD", enabled: false, roles: ["ipa_hosts","nbde_clients"]}
-      # - {name: "vault", mac_addr: "52:54:00:d4:e3:cd"}
+      - {name: "tang",       ip_addr: "192.168.100.41", enabled: true,  roles: ["tang_host",     "nbde_servers"], ram_mb: 3072}
+      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients"], cpus: 4, ram_mb: 4096}
+      - {name: "vault",      ip_addr: "192.168.100.42", enabled: true,  roles: ["vault_host",    "nbde_clients"]}
+      - {name: "logger",     ip_addr: "192.168.100.43", enabled: true,  roles: ["logger_host",   "nbde_clients"]}
+      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients"], cpus: 1}
+      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients"]}
+      - {name: "dummy-kvm",  ip_addr: "192.168.100.99", enabled: false, roles: ["nbde_clients"], cpus: 1, ram_mb: 1024}  ## Placeholder/example
+    dns_name: ape.test
 
   tasks:
+    - name: Add/update full KVM host /etc/hosts file entries
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '{{ item.name }}.{{ dns_name }}'
+        line: '{{ item.ip_addr | default(ip_addr) }}   {{ item.name }}.{{ dns_name }} {{ item.name }}'
+        state: present
+      become: true
+      with_items:
+        - '{{ kvm_list | selectattr("enabled") | list }}'
+
     - name: KVM Provision role
       include_role:
         name: kvm_provision
       vars:
         vm_item_name: "{{ item.name }}"
         vm_name: "{{ item.name }}"
-        vm_vcpus: "{{ vcpus }}"
-        vm_ram_mb: "{{ ram_mb }}"
-        vm_net: "{{ net }}"
+        vm_vcpus: "{{ item.cpus | default(vcpus) }}"
+        vm_ram_mb: "{{ item.ram_mb | default(ram_mb) }}"
+        vm_net: "{{ item.net | default(net) }}"
         cleanup_tmp: "{{ cleanup }}"
-        vm_mac: "{{ item.mac_addr }}"
+        vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_roles: "{{ item.roles | default([]) }}"
       with_items:
-        - "{{ kvm_list }}"
-      # when: item.enabled | default(false) | bool
+        - '{{ kvm_list | selectattr("enabled") | list }}'
+
+    # Added in an attempt to ensure that all processed KVM instances have sufficient time to "fully boot"
+    #   to ensure that SSH connectivity is available before proceeding.  Previously, attempts to connect
+    #   to "gather facts" where failing for 1 of the processed KVMs.
+    - name: Brief pause to ensure KVMs can start
+      pause:
+        seconds: 60
 
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
 
 - name: Tang role
-  hosts: tang_hosts
+  hosts: tang_host
   gather_facts: true
   tasks:
     - name: show the groups the host(s) are in
       debug:
         msg: "{{group_names}}"
+        verbosity: 2
     - name: hostvars[inventory_hostname].ansible_facts
       debug:
         var: hostvars[inventory_hostname].ansible_facts
+        verbosity: 3
     - name: Ping tang
       ping:
-    - name: Process 'tang_hosts' servers
+    - name: Process 'tang_host' servers
       debug:
         msg: "The deployed kvm ('{{ inventory_hostname }}')"
 
 - name: IPA role
-  hosts: ipa_hosts
+  hosts: ipa_host
   gather_facts: true
   tasks:
     - name: show the groups the host(s) are in
       debug:
         msg: "{{group_names}}"
+        verbosity: 2
     - name: hostvars[inventory_hostname].ansible_facts
       debug:
         var: hostvars[inventory_hostname].ansible_facts
+        verbosity: 3
     - name: Ping ipa1
       ping:
-    - name: Process 'ipa_hosts' servers
+    - name: Process 'ipa_host' servers
       debug:
         msg: "The deployed kvm ('{{ inventory_hostname }}')"
+
