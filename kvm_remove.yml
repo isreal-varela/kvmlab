@@ -4,13 +4,7 @@
   gather_facts: true
   become: false
   vars:
-    vm_name:
-      - tang
-      - ipa1
-      - vault
-      - logger
-      - foreman
-      - mirror-reg
+    vm_name: "tang,ipa1,vault,logger,foreman,mirror-reg"
     libvirt_pool_dir: "/srv/vmdisks"
   tasks:
     - name: Attempt to stop and remove KVM
@@ -20,13 +14,13 @@
             name: "{{ item }}"
             command: destroy
           loop:
-            "{{ vm_name }}"
+            "{{ vm_name | split(',') }}"
         - name: Remove KVM
           community.libvirt.virt:
             name: "{{ item }}"
             command: undefine
           loop:
-            "{{ vm_name }}"
+            "{{ vm_name | split(',') }}"
 
       always:
         - name: Delete vm from disk
@@ -35,11 +29,11 @@
             path: "{{ libvirt_pool_dir }}/{{ item }}.qcow2"
             state: absent
           loop:
-            "{{ vm_name }}"
+            "{{ vm_name | split(',') }}"
         - name: Undefine vm
           community.libvirt.virt:
             name: "{{ item }}"
             command: undefine
             force: true
           loop:
-            "{{ vm_name }}"
+            "{{ vm_name | split(',') }}"
