@@ -6,12 +6,14 @@
 [ipa_hosts]
 # ipa1 mac="52:54:00:d4:d2:a"
 
-[kvms:children]
-tang_hosts
-ipa_hosts
+[kvms]
 
 [kvms:vars]
 ansible_connection=ssh
+
+[kvms:children]
+tang_hosts
+ipa_hosts
 
 [containers:children]
 
