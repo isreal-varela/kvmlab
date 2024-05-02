@@ -109,7 +109,7 @@
   retries: 15
   delay: 2
 
-- name: Add host to overarchig 'kvms' group
+- name: Add host to overarching 'kvms' group
   ansible.builtin.add_host:
     hostname: "{{ vm_name }}"
     groups: "kvms"
