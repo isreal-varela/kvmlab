@@ -26,9 +26,9 @@ fi
 list=$(__join "," $@)
 if [ -z "${list}" ]; then
 	echo Destroy default KVMs
-	echo ansible-playbook -i hosts/ivlab kvm_remove.yml -vv --ask-become-pass --ask-pass -u ${USER}
+	ansible-playbook -i hosts/ivlab kvm_remove.yml -vv --ask-become-pass --ask-pass -u ${USER}
 else
 	echo Destroy specific KVMS: ${list}
-	echo ansible-playbook -i hosts/ivlab kvm_remove.yml -vv --ask-become-pass --ask-pass -u ${USER} -e "vm_name=${list}"
+	ansible-playbook -i hosts/ivlab kvm_remove.yml -vv --ask-become-pass --ask-pass -u ${USER} -e "vm_name=${list}"
 fi
 #ansible-playbook -i hosts/nglaptop kvm_remove.yml -vv --ask-become-pass --ask-pass -u ${USER}
