@@ -1,0 +1,35 @@
+---
+- name: Playbook to manage DNS records.
+  hosts: ipaserver
+  become: true
+  gather_facts: false
+
+  tasks:
+  - name: Ensure that multiple dns records are present
+    ipadnsrecord:
+      ipaadmin_password: "{{ vault_ipa_ipaadmin_pwd }}"
+      records:
+        - name: tang
+          zone_name: "{{ ipaserver_domain }}"
+          record_type: A
+          record_value: 192.168.100.41
+
+        - name: vault
+          zone_name: "{{ ipaserver_domain }}"
+          record_type: A
+          record_value: 192.168.100.42
+
+        - name: logger
+          zone_name: "{{ ipaserver_domain }}"
+          record_type: A
+          record_value: 192.168.100.43
+
+        - name: foreman
+          zone_name: "{{ ipaserver_domain }}"
+          record_type: A
+          record_value: 192.168.100.44
+
+        - name: mirror-reg
+          zone_name: "{{ ipaserver_domain }}"
+          record_type: A
+          record_value: 192.168.100.45

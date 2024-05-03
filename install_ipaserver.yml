@@ -27,3 +27,6 @@
   roles:
   - role: ipaserver
     state: present
+
+- name: Set Up DNS
+  ansible.builtin.import_playbook: create_dns_a_record.yml
