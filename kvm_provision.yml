@@ -9,15 +9,17 @@
     net: br0
     kvm_list:
       - {name: "tang",       ip_addr: "192.168.100.41", enabled: true,  roles: ["tang_host",     "nbde_servers"], ram_mb: 3072}
-      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients"], cpus: 4, ram_mb: 4096}
+      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients"], cpus: 2, ram_mb: 4096}
       - {name: "vault",      ip_addr: "192.168.100.42", enabled: true,  roles: ["vault_host",    "nbde_clients"]}
       - {name: "logger",     ip_addr: "192.168.100.43", enabled: true,  roles: ["logger_host",   "nbde_clients"]}
       - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients"], cpus: 1}
       - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients"]}
-      - {name: "dummy-kvm",  ip_addr: "192.168.100.99", enabled: false, roles: ["nbde_clients"], cpus: 1, ram_mb: 1024}  ## Placeholder/example
+      # - {name: "dummy-kvm",  ip_addr: "192.168.100.99", enabled: false, roles: ["nbde_clients"], cpus: 1, ram_mb: 1024}  ## Placeholder/example
+ 
     dns_name: ape.test
 
   tasks:
+
     - name: Add/update full KVM host /etc/hosts file entries
       lineinfile:
         dest: /etc/hosts
@@ -48,7 +50,10 @@
     #   to "gather facts" where failing for 1 of the processed KVMs.
     - name: Brief pause to ensure KVMs can start
       pause:
-        seconds: 60
+        seconds: 120
+
+- name: Include a play for generic KVM configuration
+  ansible.builtin.import_playbook: kvm_generic.yml
 
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
@@ -70,6 +75,9 @@
     - name: Process 'tang_host' servers
       debug:
         msg: "The deployed kvm ('{{ inventory_hostname }}')"
+
+- name: Include a play for IPA Server 
+  ansible.builtin.import_playbook: install-ipaserver.yml
 
 - name: IPA role
   hosts: ipa_host

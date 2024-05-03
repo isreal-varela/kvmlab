@@ -1,0 +1,14 @@
+---
+- hosts: kvms
+  
+  tasks:
+    - name: "Upload master hosts file to each KVM"
+      become: true
+      copy:
+        src: /etc/hosts
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+

@@ -51,7 +51,6 @@
           - "             vm_ram_mb: {{ vm_ram_mb }}"
           - "                vm_net: '{{ vm_net }}'"
           - "            vm_ip_addr: {{ vm_ip_addr }}"
-          - "          vm_root_pass: '{{ vm_root_pass }}'"
           - "              vm_roles: '{{ vm_roles }}'"
         verbosity: 0
 
@@ -65,13 +64,6 @@
         group: libvirt
         mode: 0600
       register: copy_results
-
-    - name: Configure the image
-      become: true
-      command: |
-        virt-customize -a {{ libvirt_pool_dir }}/{{ vm_name }}.qcow2 \
-           --hostname {{ vm_name }}
-      when: copy_results is changed
 
     - name: Copy cloud-init meta data
       template: "src=meta-data.j2 dest={{ cloud_init_meta_data }} mode=0777"
@@ -109,15 +101,13 @@
   retries: 15
   delay: 2
 
+- name: Add host to overarching 'kvms' group
+  ansible.builtin.add_host:
+    hostname: "{{ vm_name }}"
+    groups: "kvms"
+
 - name: Add host to specified groups (based on roles)
   ansible.builtin.add_host:
     hostname: "{{ vm_name }}"
     groups: "{{ vm_roles }}"
 
-- name: Update KVM HOST /etc/hosts file
-  lineinfile:
-    dest: /etc/hosts
-    regexp: '{{ vm_name }}.{{ dns_name }}'
-    line: '{{ vm_ip_addr }}   {{ vm_name }}.{{ dns_name }} {{ vm_name }}'
-    state: present
-  become: true
