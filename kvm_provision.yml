@@ -68,8 +68,8 @@
       debug:
         msg: "The deployed kvm ('{{ inventory_hostname }}')"
 
-- name: Include a play for IPA Server 
-  ansible.builtin.import_playbook: install-ipaserver.yml
+- name: Include a play for IPA Servers/Clients 
+  ansible.builtin.import_playbook: ipa.yml
 
 - name: IPA role
   hosts: ipa_host
