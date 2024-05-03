@@ -2,10 +2,6 @@
 - hosts: kvms
   
   tasks:
-    - name: "Gather facts"
-      setup:
-        gather_subset: all
-
     - name: "Upload master hosts file to each KVM"
       become: true
       copy:

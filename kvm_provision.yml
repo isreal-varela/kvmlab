@@ -19,6 +19,7 @@
     dns_name: ape.test
 
   tasks:
+
     - name: Add/update full KVM host /etc/hosts file entries
       lineinfile:
         dest: /etc/hosts
@@ -49,7 +50,7 @@
     #   to "gather facts" where failing for 1 of the processed KVMs.
     - name: Brief pause to ensure KVMs can start
       pause:
-        seconds: 60
+        seconds: 120
 
 - name: Include a play for generic KVM configuration
   ansible.builtin.import_playbook: kvm_generic.yml
