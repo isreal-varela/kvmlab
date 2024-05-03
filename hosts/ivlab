@@ -4,6 +4,8 @@
 
 [ipa_hosts]
 
+[ipa_clients]
+
 [ipaserver]
 ipa1
 

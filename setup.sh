@@ -26,5 +26,5 @@ ansible-galaxy role       install -r requirements.yml
 #ansible-playbook kvm_provision.yml --extra-vars 'vm_name=ipa'
 
 # BeetleD added below
-ansible-playbook -i hosts/ivlab kvm_provision.yml -vv -u ${USER} -e '@./secrets/ivlab.yml' --ask-vault-pass --ask-become-pass --ask-pass
+ansible-playbook -i hosts/ivlab kvm_provision.yml -vvv -u ${USER} -e '@./secrets/ivlab.yml' --ask-vault-pass --ask-become-pass --ask-pass
 #ansible-playbook -i hosts/nglaptop kvm_provision.yml -vv -u ${USER} -e '@secrets/ivlab.yml' -e 'skip_prereqs=true' -e 'net=virbr0' --ask-vault-pass
