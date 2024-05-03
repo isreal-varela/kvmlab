@@ -23,6 +23,13 @@
             "{{ vm_name | split(',') }}"
 
       always:
+        - name: Delete iso from disk
+          become: true
+          file:
+            path: "{{ libvirt_pool_dir }}/{{ item }}.iso"
+            state: absent
+          loop:
+            "{{ vm_name | split(',') }}"
         - name: Delete vm from disk
           become: true
           file:
