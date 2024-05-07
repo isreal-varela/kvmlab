@@ -5,4 +5,6 @@ kvm_prereq_pkgs:
  - python3-libvirt
  - virt-install
  - virt-manager
+ - ansible-freeipa
+ - rhel-system-roles
 # - virt-manager-common

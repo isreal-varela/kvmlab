@@ -1,0 +1,37 @@
+---
+- name: Deploying remote input and remote_files output
+  hosts: logger_host
+  roles:
+    - rhel-system-roles.logging
+  vars:
+    logging_inputs:
+      - name: remote_tcp_input
+        type: remote
+        tcp_ports: [ 514 ]
+    logging_outputs:
+      - name: remote_files_output
+        type: remote_files
+    logging_flows:
+      - name: flow_0
+        inputs: [remote_tcp_input]
+        outputs: [remote_files_output]
+
+- name: Deploying basics input and forwards output
+  hosts: logger_clients
+  roles:
+    - rhel-system-roles.logging
+  vars:
+    logging_inputs:
+      - name: basic_input
+        type: basics
+        use_imuxsock: true
+    logging_outputs:
+      - name: forward_output0
+        type: forwards
+        severity: debug
+        target: logger.ape.test
+        tcp_port: 514
+    logging_flows:
+      - name: flows0
+        inputs: [basic_input]
+        outputs: [forward_output0]
