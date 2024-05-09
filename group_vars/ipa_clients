@@ -8,3 +8,4 @@ ipaclient_ssh_trust_dns: true
 ipasssd_enable_dns_updates: true
 ipaclient_configure_dns_resolver: true
 ipaclient_dns_servers: 192.168.100.40
+ipaclient_force_join: true

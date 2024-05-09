@@ -1,0 +1,11 @@
+#cloud-config
+
+growpart:
+  mode: 
+  devices: ["/dev/vda2"]
+  ignore_growroot_disabled: true
+
+runcmd:
+  - [pvresize /dev/vda2]
+  - [lvextend -l +100%FREE rl/root]
+  - [xfs_growfs /dev/mapper/rl-root]

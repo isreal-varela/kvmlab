@@ -1,37 +1,84 @@
 ---
+#- name: Deploying remote input and remote_files output
+#  hosts: logger_host
+#  roles:
+#    - rhel-system-roles.logging
+#  vars:
+#    logging_certificates:
+#      - name: logging_cert
+#        dns: logger.ape.test
+#        principal: HTTP/logger.ape.test@APE.TEST
+#        ca: ipa
+#    logging_pki_files:
+#      - ca_cert: /etc/pki/tls/certs/ca-bundle.crt
+#        cert: /etc/pki/tls/certs/logging_cert.crt
+#        private_key: /etc/pki/tls/private/logging_cert.key
+#    logging_inputs:
+#      - name: remote_tcp_input
+#        type: remote
+#        tcp_ports: [ 514 ]
+#        tls: true
+#        permitted_clients: ['*.ape.test']
+#    logging_outputs:
+#      - name: remote_files_output
+#        type: remote_files
+#        remote_log_path: /var/log/remote/%FROMHOST%/%PROGRAMNAME:::secpath-replace%.log
+#    logging_flows:
+#      - name: flow_0
+#        inputs: [remote_tcp_input]
+#        outputs: [remote_files_output]
+
 - name: Deploying remote input and remote_files output
-  hosts: logger_host
+  hosts: logger_hosts
   roles:
     - rhel-system-roles.logging
   vars:
     logging_inputs:
-      - name: remote_tcp_input
-        type: remote
-        tcp_ports: [ 514 ]
+      - name: relp_server
+        type: relp
+        port: 514
+        tls: true
+        ca_cert: /etc/pki/tls/certs/ca-bundle.crt
+        cert: /etc/pki/tls/certs/loggin_cert.crt
+        private_key: /etc/pki/tls/private/logging_cert.key
+        pki_authmode: name
+        permitted_clients:
+          - '*.ape.test'
     logging_outputs:
       - name: remote_files_output
         type: remote_files
+        remote_log_path: /var/log/remote/%FROMHOST%/%PROGRAMNAME:::secpath-replace%.log
     logging_flows:
-      - name: flow_0
-        inputs: [remote_tcp_input]
-        outputs: [remote_files_output]
+      - name: example_flow
+        inputs: relp_server
+        outputs: remote_files_output
 
 - name: Deploying basics input and forwards output
   hosts: logger_clients
   roles:
     - rhel-system-roles.logging
   vars:
+    logging_certificates:
+      - name: client_cert
+        dns: vault.ape.test
+        principal: HTTP/vault.ape.test@APE.TEST
+        ca: ipa
     logging_inputs:
       - name: basic_input
         type: basics
-        use_imuxsock: true
     logging_outputs:
-      - name: forward_output0
-        type: forwards
-        severity: debug
-        target: logger.ape.test
-        tcp_port: 514
+      - name: relp_client
+        type: relp
+        target: logging.ape.test
+        port: 514
+        tls: true
+        ca_cert: /etc/pki/tls/certs/ca-bundle.crt
+        cert: /etc/pki/tls/certs/client_cert.crt
+        private_key: /etc/pki/tls/private/client_key.key
+        pki_authmode: name
+        permitted_servers:
+          - 'logger.ape.test'
     logging_flows:
-      - name: flows0
+      - name: example_flow
         inputs: [basic_input]
-        outputs: [forward_output0]
+        outputs: [relp_client]
