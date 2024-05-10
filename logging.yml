@@ -1,6 +1,20 @@
 ---
+- name: Configure firewalld or syslog server
+  hosts: logger_host
+  tasks:
+    - name: Allow incoming syslog traffic to the local host
+      ansible.builtin.include_role:
+        name: rhel-system-roles.firewall
+      vars:
+        firewall:
+          - port: 514/tcp
+            service: syslog
+            state: enabled
+            runtime: true
+            permanent: true
+
 - name: Configure syslog server to recieve remote log messages and store them locally
-  hosts: logger_hosts
+  hosts: logger_host
   roles:
     - rhel-system-roles.logging
   vars:
@@ -32,8 +46,9 @@
         inputs: [input_name]
         outputs: [output_name]
 
+# Client Configuration
 - name: Configure syslog client to send to logger server
-  hosts: logger_clients
+  hosts: logger_client
   roles:
     - rhel-system-roles.logging
   vars:

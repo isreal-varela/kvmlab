@@ -28,7 +28,7 @@
     state: present
 
 - name: Playbook to configure IPA clients
-  hosts: ipa_clients
+  hosts: ipa_client
   become: true
   roles:
   - role: ipaclient
