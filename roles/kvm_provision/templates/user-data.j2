@@ -6,6 +6,6 @@ growpart:
   ignore_growroot_disabled: true
 
 runcmd:
-  - [pvresize /dev/vda2]
-  - [lvextend -l +100%FREE rl/root]
-  - [xfs_growfs /dev/mapper/rl-root]
+  - pvresize /dev/vda2
+  - lvextend -l +100%FREE rl/root
+  - xfs_growfs /dev/mapper/rl-root

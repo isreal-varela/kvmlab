@@ -26,10 +26,10 @@ all:
     ansible_python_interpreter: /usr/bin/python3
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
     kvm_list:
-      - {name: "tang",       ip_addr: "192.168.100.41", enabled: false,  roles: ["tang_host",     "nbde_servers", "ipa_clients", "logger_clients"], ram_mb: 3072}
-      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: false,  roles: ["ipa_host",      "nbde_clients", "logger_clients"], cpus: 2, ram_mb: 4096}
+      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients", "logger_clients"], cpus: 2, ram_mb: 4096}
+      - {name: "tang",       ip_addr: "192.168.100.41", enabled: true,  roles: ["tang_host",     "nbde_servers", "ipa_clients", "logger_clients"], ram_mb: 3072}
       - {name: "vault",      ip_addr: "192.168.100.42", enabled: true,  roles: ["vault_host",    "nbde_clients", "ipa_clients", "logger_clients"]}
-      - {name: "logger",     ip_addr: "192.168.100.43", enabled: true,  roles: ["logger_host",   "nbde_clients", "ipa_clients"]}
-      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: false,  roles: ["foreman_host",  "nbde_clients", "ipa_clients", "logger_clients"], cpus: 1}
-      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: false,  roles: ["registry_host", "nbde_clients", "ipa_clients", "logger_clients"]}
+      - {name: "logger",     ip_addr: "192.168.100.43", enabled: true,  roles: ["logger_hosts",  "nbde_clients", "ipa_clients"]}
+      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients", "ipa_clients", "logger_clients"], cpus: 1}
+      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients", "ipa_clients", "logger_clients"]}
 
