@@ -30,6 +30,7 @@
         vm_name: "{{ item.name }}"
         vm_vcpus: "{{ item.cpus | default(vcpus) }}"
         vm_ram_mb: "{{ item.ram_mb | default(ram_mb) }}"
+        vm_root_disk: "{{ item.rt_disk | default(vm_disk) }}"
         vm_net: "{{ item.net | default(net) }}"
         cleanup_tmp: "{{ cleanup }}"
         vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"

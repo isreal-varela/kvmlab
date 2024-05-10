@@ -49,6 +49,7 @@
           - "  ansible_user_ssh_key: '{{ ansible_user_ssh_key }}'"
           - "              vm_vcpus: {{ vm_vcpus }}"
           - "             vm_ram_mb: {{ vm_ram_mb }}"
+          - "          vm_root_disk: '{{ vm_root_disk }}'"
           - "                vm_net: '{{ vm_net }}'"
           - "            vm_ip_addr: {{ vm_ip_addr }}"
           - "              vm_roles: '{{ vm_roles }}'"
@@ -85,6 +86,12 @@
       community.libvirt.virt:
         command: define
         xml: "{{ lookup('template', 'vm-template.xml.j2') }}"
+
+    - name: Resize root disk
+      become: true
+      command: |
+        qemu-img resize {{ libvirt_pool_dir }}/{{ vm_name }}.qcow2 {{ vm_root_disk }}
+      when: ( vm_root_disk != vm_disk )
 
   when: ( vm_name not in existing_vms.list_vms )
 
