@@ -51,44 +51,11 @@
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
 
-- name: Tang role
-  hosts: tang_host
-  gather_facts: true
-  tasks:
-    - name: show the groups the host(s) are in
-      debug:
-        msg: "{{group_names}}"
-        verbosity: 2
-    - name: hostvars[inventory_hostname].ansible_facts
-      debug:
-        var: hostvars[inventory_hostname].ansible_facts
-        verbosity: 3
-    - name: Ping tang
-      ping:
-    - name: Process 'tang_host' servers
-      debug:
-        msg: "The deployed kvm ('{{ inventory_hostname }}')"
-
 - name: Include a play for IPA Server/Client
   ansible.builtin.import_playbook: ipa.yml
 
-- name: IPA role
-  hosts: ipa_host
-  gather_facts: true
-  tasks:
-    - name: show the groups the host(s) are in
-      debug:
-        msg: "{{group_names}}"
-        verbosity: 2
-    - name: hostvars[inventory_hostname].ansible_facts
-      debug:
-        var: hostvars[inventory_hostname].ansible_facts
-        verbosity: 3
-    - name: Ping ipa1
-      ping:
-    - name: Process 'ipa_host' servers
-      debug:
-        msg: "The deployed kvm ('{{ inventory_hostname }}')"
+- name: Include a play for Mirror-Registry
+  ansible.builtin.import_playbook: registry.yml
 
 - name: Include a play for Syslog Servers/Clients 
   ansible.builtin.import_playbook: logging.yml
