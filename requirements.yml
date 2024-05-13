@@ -3,4 +3,3 @@ collections:
   # Install vmware collection
   - community.libvirt
   - community.general
-  - fedora.linux_system_roles
