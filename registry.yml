@@ -1,14 +1,14 @@
 ---
-# - name: Request cert for mirror registry
-#   hosts: registry_host
-#  roles:
-#    - rhel-system-roles.certificate
-#  vars:
-#    certificate_requests:
-#      - name: mirror-reg
-#        dns: quay.mirror-reg.ape.test
-#        principal: HTTP/quay.mirror-reg.ape.test@APE.TEST
-#        ca: ipa
+- name: Generate certificates for use with Quay mirror registry
+  hosts: registry_host
+  roles:
+    - rhel-system-roles.certificate
+  vars:
+    certificate_requests:
+      - name: "{{ inventory_hostname }}"
+        dns: "{{ inventory_hostname }}.{{ dns_name }}"
+        principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
+        ca: ipa
 
 - name: Configure firewalld for access to mirror registry
   hosts: registry_host
@@ -34,9 +34,6 @@
         state: directory
         owner: ansible
         mode: '0755'
-
-    ### Likely will have issue with ansible "linger" setting
-
     - name: Install podman
       become: true
       ansible.builtin.package:
@@ -51,8 +48,12 @@
       become: true
       ansible.builtin.shell: |
         cd /home/ansible/mr &&
-        ./mirror-registry install --quayHostname {{ inventory_hostname }} \
+        ./mirror-registry install --quayHostname "{{ inventory_hostname }}.{{ dns_name }}" \
                                   --quayRoot /opt/quay \
                                   --initUser admin \
-                                  --initPassword {{ quay_admin_password }}
+                                  --initPassword {{ quay_admin_password }} \
+                                  --sslCert "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
+                                  --sslKey "/etc/pki/tls/private/{{ inventory_hostname }}.key" \
+                                  --sslCheckSkip false \
+                                  --verbose
       register: exec_output
