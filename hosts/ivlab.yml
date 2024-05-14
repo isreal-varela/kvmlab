@@ -3,6 +3,8 @@
 tang_host:
 
 ipa_host:
+  hosts:
+    ipa1
 
 ipa_client:
 
@@ -15,9 +17,6 @@ nbde_clients:
 kvms:
   vars:
     ansible_connection: ssh
-  children:
-    tang_host
-    ipa_host
 
 containers:
   vars:

@@ -17,7 +17,7 @@ function __join {
 }
 
 test1=$@
-test2=`(echo "$@" | sed -e 's/[[:punct:]]//g')`
+test2=`(echo "$@" | sed -e 's/[[:space:]!@#$%^&*()~\`<>,\\/:;\|]//g')`
 if [ "${test1}" != "${test2}" ]; then
 	__usage
 	exit 1
@@ -26,9 +26,8 @@ fi
 list=$(__join "," $@)
 if [ -z "${list}" ]; then
 	echo Destroy default KVMs
-	ansible-playbook -i hosts/ivlab kvm_remove.yml -vv --ask-become-pass --ask-pass -u ${USER}
+	ansible-playbook -i hosts/ivlab.yml kvm_remove.yml -vv --ask-become-pass --ask-pass --ask-vault-pass -u ${USER} -e '@./secrets/ivlab.yml' -l localhost
 else
 	echo Destroy specific KVMS: ${list}
-	ansible-playbook -i hosts/ivlab kvm_remove.yml -vv --ask-become-pass --ask-pass -u ${USER} -e "vm_name=${list}"
+	ansible-playbook -i hosts/ivlab.yml kvm_remove.yml -vv --ask-become-pass --ask-pass --ask-vault-pass -u ${USER} -e '@./secrets/ivlab.yml' -e "vm_name=${list}" -l localhost,ipa1
 fi
-#ansible-playbook -i hosts/nglaptop kvm_remove.yml -vv --ask-become-pass --ask-pass -u ${USER}

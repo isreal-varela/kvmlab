@@ -1,4 +1,9 @@
 ---
+
+- name: Include a play for IPA cleanup
+  ansible.builtin.import_playbook: ipa_kvm_clean.yml
+  ignore_errors: true
+
 - name: Remove VM Lab
   hosts: localhost
   gather_facts: true
