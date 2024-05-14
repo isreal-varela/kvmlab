@@ -1,6 +1,8 @@
 ---
 
 - name: Include a play for IPA cleanup
+  vars:
+    vm_name: "tang,ipa1,vault,logger,foreman,mirror-reg"
   ansible.builtin.import_playbook: ipa_kvm_clean.yml
   ignore_errors: true
 

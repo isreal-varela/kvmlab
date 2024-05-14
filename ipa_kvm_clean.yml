@@ -10,4 +10,4 @@
         name: "{{ item }}.{{ dns_name }}"
         state: absent
       loop:
-         "{{ vm_name | split(',') }}"
+         "{{ vm_name | split(',') | reject('search', 'ipa1') | list }}"
