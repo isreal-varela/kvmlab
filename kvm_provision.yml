@@ -35,6 +35,9 @@
         cleanup_tmp: "{{ cleanup }}"
         vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_roles: "{{ item.roles | default([]) }}"
+        cloud_init_user_data: "{{ libvirt_pool_dir }}/{{ item.name }}-user-data"
+        cloud_init_meta_data: "{{ libvirt_pool_dir }}/{{ item.name }}-meta-data"
+        cloud_init_network_config: "{{ libvirt_pool_dir }}/{{ item.name }}-network-config"
       with_items:
         - '{{ kvm_list | selectattr("enabled") | list }}'
 
@@ -56,6 +59,9 @@
 
 - name: Include a play for Mirror-Registry
   ansible.builtin.import_playbook: registry.yml
+
+- name: Include a play for Foreman
+  ansible.builtin.import_playbook: foreman.yml
 
 - name: Include a play for Syslog Servers/Clients 
   ansible.builtin.import_playbook: logging.yml

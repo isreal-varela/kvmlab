@@ -30,6 +30,13 @@
             "{{ vm_name | split(',') }}"
 
       always:
+        - name: Scrub individual ssh-keys from personal known_hosts file
+          lineinfile:
+            dest: ~/.ssh/known_hosts
+            regexp: '^{{ item }} '
+            state: absent
+          loop:
+            "{{ vm_name | split(',') }}"
         - name: Delete iso from disk
           become: true
           file:
@@ -51,3 +58,4 @@
             force: true
           loop:
             "{{ vm_name | split(',') }}"
+

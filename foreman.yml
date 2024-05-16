@@ -1,0 +1,55 @@
+---
+- name: Playbook to install foreman
+  hosts: foreman_host
+  become: true
+
+  tasks:
+    - name: Add Puppet repository
+      # sudo dnf -y install https://yum.puppet.com/puppet7-release-el-9.noarch.rpm
+      shell: |
+        sudo dnf -y install https://yum.puppet.com/puppet7-release-el-9.noarch.rpm
+      # ansible.builtin.yum_repository:
+      #   name: puppet7
+      #   description: Puppet 7 Repository el 8 - x86_64
+      #   baseurl: https://yum.puppet.com/puppet7-release-el-9.noarch.rpm
+      #   repo-gpgcheck: true
+      #   state: present
+
+    - name: Add Foreman repository
+      #sudo dnf -y install https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
+      shell: |
+        dnf -y install https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
+      # ansible.builtin.yum_repository:
+      #   name: foreman
+      #   description: Foreman 3.10
+      #   baseurl: https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
+      #   repo-gpgcheck: true
+      #   state: present
+
+    - name: Download the foreman-installer
+      #sudo dnf -y install foreman-installer
+      ansible.builtin.dnf:
+        name: foreman-installer
+        state: present
+      # when: false
+
+    - name: Download the foreman-installer-katello
+      #sudo dnf -y install foreman-installer-katello
+      ansible.builtin.dnf:
+        name: foreman-installer-katello
+        state: present
+      # when: false
+
+    - name: Execute foreman-installer
+      # sudo foreman-installer
+      shell: |
+        foreman-installer --scenario foreman --help
+      #  --foreman-client-ssl-ca=
+      #  --foreman-client-ssl-cert=
+      #  --foreman-client-ssl-key=
+      #  --foreman-client-cors-domains=
+      #  --foreman-db-password=
+      #  --foreman-db-username=
+      #  --<many-many-more>
+      register: fm_install_rc
+      # when: false
