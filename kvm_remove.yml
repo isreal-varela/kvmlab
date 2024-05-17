@@ -22,12 +22,14 @@
             command: destroy
           loop:
             "{{ vm_name | split(',') }}"
+          failed_when: false
         - name: Remove KVM
           community.libvirt.virt:
             name: "{{ item }}"
             command: undefine
           loop:
             "{{ vm_name | split(',') }}"
+          failed_when: false
 
       always:
         - name: Scrub individual ssh-keys from personal known_hosts file
@@ -40,14 +42,21 @@
         - name: Delete iso from disk
           become: true
           file:
-            path: "{{ libvirt_pool_dir }}/{{ item }}.iso"
+            path: "{{ libvirt_pool_dir }}/{{ item }}/firstboot.iso"
             state: absent
           loop:
             "{{ vm_name | split(',') }}"
         - name: Delete vm from disk
           become: true
           file:
-            path: "{{ libvirt_pool_dir }}/{{ item }}.qcow2"
+            path: "{{ libvirt_pool_dir }}/{{ item }}/disk01.qcow2"
+            state: absent
+          loop:
+            "{{ vm_name | split(',') }}"
+        - name: Delete KVM-specific folder from libvirt
+          become: true
+          file:
+            path: "{{ libvirt_pool_dir }}/{{ item }}"
             state: absent
           loop:
             "{{ vm_name | split(',') }}"

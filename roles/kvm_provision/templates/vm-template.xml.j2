@@ -29,12 +29,12 @@
     <emulator>/usr/libexec/qemu-kvm</emulator>
     <disk type="file" device="disk">
       <driver name="qemu" type="qcow2"/>
-      <source file="{{ libvirt_pool_dir }}/{{ vm_name }}.qcow2"/>
+      <source file="{{ libvirt_pool_dir }}/{{ vm_name }}/disk01.qcow2"/>
       <target dev="vda" bus="virtio"/>
     </disk>
     <disk type='file' device='cdrom'>
       <driver name='qemu' type='raw' discard='unmap'/>
-      <source file='{{ libvirt_pool_dir }}/{{ vm_name }}.iso' index='2'/>
+      <source file='{{ libvirt_pool_dir }}/{{ vm_name }}/firstboot.iso' index='2'/>
       <backingStore/>
       <target dev='sda' bus='scsi'/>
       <readonly/>
