@@ -3,6 +3,8 @@
 tang_host:
 
 ipa_host:
+  hosts:
+    ipa1
 
 ipa_client:
 
@@ -15,9 +17,6 @@ nbde_clients:
 kvms:
   vars:
     ansible_connection: ssh
-  children:
-    tang_host
-    ipa_host
 
 containers:
   vars:
@@ -29,6 +28,7 @@ all:
   vars:
     ansible_python_interpreter: /usr/bin/python3
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    dns_name: 'ape.test'
     kvm_list:
       - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients", "logger_client"], cpus: 2, ram_mb: 4096}
       - {name: "tang",       ip_addr: "192.168.100.41", enabled: true,  roles: ["tang_host",     "nbde_servers", "ipa_client", "logger_client"], ram_mb: 3072}

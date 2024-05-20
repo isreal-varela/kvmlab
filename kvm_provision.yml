@@ -35,15 +35,21 @@
         cleanup_tmp: "{{ cleanup }}"
         vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_roles: "{{ item.roles | default([]) }}"
+        cloud_init_user_data: "{{ libvirt_pool_dir }}/{{ item.name }}/user-data"
+        cloud_init_meta_data: "{{ libvirt_pool_dir }}/{{ item.name }}/meta-data"
+        cloud_init_network_config: "{{ libvirt_pool_dir }}/{{ item.name }}/network-config"
       with_items:
         - '{{ kvm_list | selectattr("enabled") | list }}'
 
     # Added in an attempt to ensure that all processed KVM instances have sufficient time to "fully boot"
     #   to ensure that SSH connectivity is available before proceeding.  Previously, attempts to connect
     #   to "gather facts" where failing for 1 of the processed KVMs.
-    - name: Brief pause to ensure KVMs can start
-      pause:
-        seconds: 120
+    # - name: Brief pause to ensure KVMs can start
+    #   pause:
+    #     seconds: 120
+    # 2024-05-17 DB - Commented out above because trying to use "wait_for" within "kvm_generic.yml"
+    #                   and testing for port 22 becoming accessible and including "OpenSSL" in response.
+    #                   Have noticed some KVMs not being "fully accessible" for 2m.
 
 - name: Include a play for generic KVM configuration
   ansible.builtin.import_playbook: kvm_generic.yml
@@ -51,44 +57,14 @@
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
 
-- name: Tang role
-  hosts: tang_host
-  gather_facts: true
-  tasks:
-    - name: show the groups the host(s) are in
-      debug:
-        msg: "{{group_names}}"
-        verbosity: 2
-    - name: hostvars[inventory_hostname].ansible_facts
-      debug:
-        var: hostvars[inventory_hostname].ansible_facts
-        verbosity: 3
-    - name: Ping tang
-      ping:
-    - name: Process 'tang_host' servers
-      debug:
-        msg: "The deployed kvm ('{{ inventory_hostname }}')"
-
 - name: Include a play for IPA Server/Client
   ansible.builtin.import_playbook: ipa.yml
 
-- name: IPA role
-  hosts: ipa_host
-  gather_facts: true
-  tasks:
-    - name: show the groups the host(s) are in
-      debug:
-        msg: "{{group_names}}"
-        verbosity: 2
-    - name: hostvars[inventory_hostname].ansible_facts
-      debug:
-        var: hostvars[inventory_hostname].ansible_facts
-        verbosity: 3
-    - name: Ping ipa1
-      ping:
-    - name: Process 'ipa_host' servers
-      debug:
-        msg: "The deployed kvm ('{{ inventory_hostname }}')"
+- name: Include a play for Mirror-Registry
+  ansible.builtin.import_playbook: registry.yml
+
+- name: Include a play for Foreman
+  ansible.builtin.import_playbook: foreman.yml
 
 - name: Include a play for Syslog Servers/Clients 
   ansible.builtin.import_playbook: logging.yml
