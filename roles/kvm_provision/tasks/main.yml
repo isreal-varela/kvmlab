@@ -95,6 +95,7 @@
       become: true
       community.libvirt.virt:
         command: define
+        autostart: true
         xml: "{{ lookup('template', 'vm-template.xml.j2') }}"
 
     - name: Resize root disk
