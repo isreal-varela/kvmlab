@@ -1,0 +1,59 @@
+---
+- name: Generate certificates for use with Quay mirror registry
+  hosts: registry_host
+  roles:
+    - rhel-system-roles.certificate
+  vars:
+    certificate_requests:
+      - name: "{{ inventory_hostname }}"
+        dns: "{{ inventory_hostname }}.{{ dns_name }}"
+        principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
+        ca: ipa
+
+- name: Configure firewalld for access to mirror registry
+  hosts: registry_host
+  tasks:
+    - name: Allow incoming API traffic to the local host and then to pod
+      ansible.builtin.include_role:
+        name: rhel-system-roles.firewall
+      vars:
+        firewall:
+          - port: 8443/tcp
+            state: enabled
+            runtime: true
+            permanent: true
+    - name: Create target folder for software upload
+      ansible.builtin.file:
+        path: /home/ansible/mr
+        state: directory
+        owner: ansible
+        mode: '0755'
+    - name: Create target quay configuration files
+      ansible.builtin.file:
+        path: /opt/quay
+        state: directory
+        owner: ansible
+        mode: '0755'
+    - name: Install podman
+      become: true
+      ansible.builtin.package:
+        name: podman
+        state: present
+    - name: Stage 'mirror-registry' archive on target for later execution
+      become: false
+      ansible.builtin.unarchive:
+        src: /srv/software/mirror-registry.tar.gz
+        dest: /home/ansible/mr
+    - name: Execute mirror-registry installer
+      become: true
+      ansible.builtin.shell: |
+        cd /home/ansible/mr &&
+        ./mirror-registry install --quayHostname "{{ inventory_hostname }}.{{ dns_name }}" \
+                                  --quayRoot /opt/quay \
+                                  --initUser admin \
+                                  --initPassword {{ quay_admin_password }} \
+                                  --sslCert "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
+                                  --sslKey "/etc/pki/tls/private/{{ inventory_hostname }}.key" \
+                                  --sslCheckSkip false \
+                                  --verbose
+      register: exec_output

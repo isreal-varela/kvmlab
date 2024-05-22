@@ -1,0 +1,10 @@
+---
+- hosts: logger.ape.test
+  roles:
+    - rhel-system-roles.certificate
+  vars:
+    certificate_requests:
+      - name: mycert
+        dns: logger.ape.test
+        principal: HTTP/logger.ape.test@APE.TEST
+        ca: ipa

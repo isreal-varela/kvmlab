@@ -1,0 +1,19 @@
+ansible_connection: ssh
+# ansible_user: ansible
+ansible_ssh_port: 22
+ansible_ssh_user: ansible
+ansible_become_user: root
+ansible_become_password: "{{ vault_kvm_os_usr_ans_pwd }}"
+ansible_ssh_private_key_file: "{{ vault_kvm_os_usr_ans_keyfile }}"
+# ipa server stuff
+ipaadmin_password: "{{ vault_ipa_ipaadmin_pwd }}"
+ipadm_password: "{{ vault_ipa_ipadm_pwd }}"
+ipaserver_domain: ape.test
+ipaserver_realm: APE.TEST
+ipaserver_no_host_dns: true
+ipaserver_setup_dns: true
+ipaserver_setup_kra: true
+ipaserver_no_hbac_allow: true
+ipaserver_forwarders: 192.168.100.2
+ipaserver_setup_ca: true
+ipaserver_hostname: ipa1.ape.test

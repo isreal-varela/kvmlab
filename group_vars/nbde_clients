@@ -1,0 +1,6 @@
+DUMMY_nbde_client_bindings:
+  - device: /dev/vda2
+    encryption_password: "{{ vault_nbde_encr_pwd }}"
+    servers:
+      # - http://tang.ape.test
+      - http://192.168.100.41

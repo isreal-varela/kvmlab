@@ -1,0 +1,35 @@
+---
+- name: Playbook to configure IPA server
+  hosts: ipa_host
+  become: true
+
+  tasks:
+  - name: Get ethernet interface names to be used later for disabling ipv6
+    shell: "set -o pipefail && nmcli connection show | grep ethernet | awk '{print $1}'"
+    changed_when: false
+    register: ethernet_interface_name
+
+  - name:  Disable IPv6 in Network Manager for the main ethernet device
+    community.general.nmcli:
+      type: ethernet
+      conn_name: "{{ item }}"
+      method6: disabled
+      state: present
+    #notify:
+    #  - Restart network
+    #  - Restart NetworkManager
+    with_items: "{{ ethernet_interface_name.stdout_lines }}"
+
+- name: Playbook to install IPA server
+  hosts: ipa_host
+  become: true
+  roles:
+  - role: ipaserver
+    state: present
+
+- name: Playbook to configure IPA clients
+  hosts: ipa_client
+  become: true
+  roles:
+  - role: ipaclient
+    state: present

@@ -1,0 +1,14 @@
+---
+- name: Scrub IPA of deleted hosts
+  hosts: ipa_host
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Ensure KVM instance is absent
+      ipahost:
+        ipaadmin_password: "{{ vault_ipa_ipaadmin_pwd }}"
+        name: "{{ item }}.{{ dns_name }}"
+        state: absent
+      loop:
+         "{{ vm_name | split(',') | reject('search', 'ipa1') | list }}"
+      failed_when: false

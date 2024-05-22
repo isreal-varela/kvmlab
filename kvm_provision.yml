@@ -1,0 +1,70 @@
+---
+- name: Deploys VM based on cloud image
+  hosts: localhost
+  gather_facts: true
+  become: false
+  vars:
+    vcpus: 2
+    ram_mb: 2048
+    net: br0
+    # kvm_list:   # Removed and placed in hosts/<env>.yml file
+    dns_name: ape.test
+
+  tasks:
+
+    - name: Add/update full KVM host /etc/hosts file entries
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '{{ item.name }}.{{ dns_name }}'
+        line: '{{ item.ip_addr | default(ip_addr) }}   {{ item.name }}.{{ dns_name }} {{ item.name }}'
+        state: present
+      become: true
+      with_items:
+        - '{{ kvm_list | selectattr("enabled") | list }}'
+
+    - name: KVM Provision role
+      include_role:
+        name: kvm_provision
+      vars:
+        vm_item_name: "{{ item.name }}"
+        vm_name: "{{ item.name }}"
+        vm_vcpus: "{{ item.cpus | default(vcpus) }}"
+        vm_ram_mb: "{{ item.ram_mb | default(ram_mb) }}"
+        vm_root_disk: "{{ item.rt_disk | default(vm_disk) }}"
+        vm_net: "{{ item.net | default(net) }}"
+        cleanup_tmp: "{{ cleanup }}"
+        vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
+        vm_roles: "{{ item.roles | default([]) }}"
+        cloud_init_user_data: "{{ libvirt_pool_dir }}/{{ item.name }}/user-data"
+        cloud_init_meta_data: "{{ libvirt_pool_dir }}/{{ item.name }}/meta-data"
+        cloud_init_network_config: "{{ libvirt_pool_dir }}/{{ item.name }}/network-config"
+      with_items:
+        - '{{ kvm_list | selectattr("enabled") | list }}'
+
+    # Added in an attempt to ensure that all processed KVM instances have sufficient time to "fully boot"
+    #   to ensure that SSH connectivity is available before proceeding.  Previously, attempts to connect
+    #   to "gather facts" where failing for 1 of the processed KVMs.
+    # - name: Brief pause to ensure KVMs can start
+    #   pause:
+    #     seconds: 120
+    # 2024-05-17 DB - Commented out above because trying to use "wait_for" within "kvm_generic.yml"
+    #                   and testing for port 22 becoming accessible and including "OpenSSL" in response.
+    #                   Have noticed some KVMs not being "fully accessible" for 2m.
+
+- name: Include a play for generic KVM configuration
+  ansible.builtin.import_playbook: kvm_generic.yml
+
+- name: Include a play for NBDE Servers/clients
+  ansible.builtin.import_playbook: nbde.yml
+
+- name: Include a play for IPA Server/Client
+  ansible.builtin.import_playbook: ipa.yml
+
+- name: Include a play for Mirror-Registry
+  ansible.builtin.import_playbook: registry.yml
+
+- name: Include a play for Foreman
+  ansible.builtin.import_playbook: foreman.yml
+
+- name: Include a play for Syslog Servers/Clients 
+  ansible.builtin.import_playbook: logging.yml

@@ -1,0 +1,9 @@
+ansible_connection: ssh
+# ansible_user: ansible
+ansible_ssh_port: 22
+ansible_ssh_user: ansible
+ansible_become_user: root
+ansible_become_password: "{{ vault_kvm_os_usr_ans_pwd }}"
+ansible_ssh_private_key_file: "{{ vault_kvm_os_usr_ans_keyfile }}"
+
+quay_admin_password: "{{ vault_quay_admin_pwd }}"

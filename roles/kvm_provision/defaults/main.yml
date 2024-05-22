@@ -1,12 +1,21 @@
 ---
 # defaults file for kvm_provision
-base_image_name: rocky9-template.img
+base_image_name: rocky9-template.qcow2
 libvirt_pool_dir: "/srv/vmdisks"
 vm_name: rhel9.3-dev
+cloud_init_user_data: "{{ libvirt_pool_dir }}/user-data"
+cloud_init_meta_data: "{{ libvirt_pool_dir }}/meta-data"
+cloud_init_network_config: "{{ libvirt_pool_dir }}/network-config"
 vm_vcpus: 4
 vm_ram_mb: 2048
-vm_net: br0 
-vm_root_pass: toor
-ssh_key: "{{ lookup('env', 'HOME') }}/.ssh/personal.pub"
-
-
+vm_net: br0
+vm_disk: '40G'
+vm_root_pass: "{{ vault_kvm_os_usr_root_pwd }}"
+ansible_user_ssh_key: "{{ vault_kvm_os_usr_ans_keyfile }}"
+ip_addr: 192.168.100.99
+subnet: 24
+gateway: 192.168.100.1
+dns1: 8.8.8.8
+dns2: 1.1.1.1
+dns_search: ape.test
+dns_name: ape.test
