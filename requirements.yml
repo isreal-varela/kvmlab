@@ -1,5 +1,5 @@
 ---
 collections:
-  # Install vmware collection
+  # Install pre-requisite collection(s)
   - community.libvirt
   - community.general

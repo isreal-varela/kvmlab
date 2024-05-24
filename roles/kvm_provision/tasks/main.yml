@@ -62,7 +62,7 @@
         owner: qemu
         group: libvirt
         state: directory
-        mode: '0755'
+        mode: '0775'
 
     - name: Copy base image to KVM-specific folder
       become: true
