@@ -1,9 +1,54 @@
 ---
+
+
+- name: Generate certificates for use with Foreman
+  hosts: foreman_host
+  roles:
+    - rhel-system-roles.certificate
+  vars:
+    certificate_requests:
+      - name: "{{ inventory_hostname }}"
+        dns: "{{ inventory_hostname }}.{{ dns_name }}"
+        principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
+        ca: ipa
+
 - name: Playbook to install foreman
   hosts: foreman_host
   become: true
 
   tasks:
+
+    - name: Allow incoming traffic to the local host
+      ansible.builtin.include_role:
+        name: rhel-system-roles.firewall
+      vars:
+        firewall:
+          - {zone: public,
+             service: [http, https],
+             port: [ '53/udp', '53/tcp', '67/udp', '69/udp', '5647/tcp', '8000/tcp', '8140/tcp', '9090/tcp' ],
+             state: enabled}
+
+    - name: Add Foreman repository
+      #sudo dnf -y install https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
+      shell: |
+        sudo dnf -y install https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
+      # ansible.builtin.yum_repository:
+      #   name: foreman
+      #   description: Foreman 3.10
+      #   baseurl: https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
+      #   repo-gpgcheck: true
+      #   state: present
+
+    - name: Add Katello repository
+      shell: |
+        sudo dnf -y install https://yum.theforeman.org/katello/4.12/katello/el9/x86_64/katello-repos-latest.rpm
+      # ansible.builtin.yum_repository:
+      #   name: foreman
+      #   description: Foreman 3.10
+      #   baseurl: https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
+      #   repo-gpgcheck: true
+      #   state: present
+
     - name: Add Puppet repository
       # sudo dnf -y install https://yum.puppet.com/puppet7-release-el-9.noarch.rpm
       shell: |
@@ -15,23 +60,12 @@
       #   repo-gpgcheck: true
       #   state: present
 
-    - name: Add Foreman repository
-      #sudo dnf -y install https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
-      shell: |
-        dnf -y install https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
-      # ansible.builtin.yum_repository:
-      #   name: foreman
-      #   description: Foreman 3.10
-      #   baseurl: https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
-      #   repo-gpgcheck: true
-      #   state: present
-
-    - name: Download the foreman-installer
-      #sudo dnf -y install foreman-installer
-      ansible.builtin.dnf:
-        name: foreman-installer
-        state: present
-      # when: false
+    # - name: Download the foreman-installer
+    #   #sudo dnf -y install foreman-installer
+    #   ansible.builtin.dnf:
+    #     name: foreman-installer
+    #     state: present
+    #   # when: false
 
     - name: Download the foreman-installer-katello
       #sudo dnf -y install foreman-installer-katello
@@ -43,13 +77,24 @@
     - name: Execute foreman-installer
       # sudo foreman-installer
       shell: |
-        foreman-installer --scenario foreman --help
-      #  --foreman-client-ssl-ca=
-      #  --foreman-client-ssl-cert=
-      #  --foreman-client-ssl-key=
-      #  --foreman-client-cors-domains=
-      #  --foreman-db-password=
-      #  --foreman-db-username=
-      #  --<many-many-more>
+        foreman-installer --scenario katello \
+          --certs-server-cert='/etc/pki/tls/certs/{{ inventory_hostname }}.crt' \
+          --certs-server-key='/etc/pki/tls/private/{{ inventory_hostname }}.key' \
+          --certs-server-ca-cert='/etc/ipa/ca.crt' \
+          --foreman-initial-admin-first-name='APE.TEST' \
+          --foreman-initial-admin-last-name='Administator' \
+          --foreman-initial-admin-username='admin' \
+          --foreman-initial-admin-password='{{ vault_foreman_admin_pwd }}' \
+          -l INFO
       register: fm_install_rc
       # when: false
+
+      # HOLDING PEN FOR OTHER POSSIBLE CLI PARAMETERS
+      #    --foreman-proxy-ssl=true \
+      #    --foreman-proxy-ssl-ca="/etc/pki/tls/certs/ca-bundle.crt" \
+      #    --foreman-proxy-ssl-cert="/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
+      #    --foreman-proxy-ssl-key="/etc/pki/tls/certs/private/{{ inventory_hostname }}.key"
+      #    --foreman-db-password="admin" \
+      #    --foreman-db-username="{{ vault_foreman_db_pwd }}"
+      #    --foreman-client-cors-domains=
+      #  --<many-many-more>
