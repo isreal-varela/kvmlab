@@ -1,0 +1,10 @@
+:modules:
+  - hammer_cli_foreman
+
+:foreman:
+  :host: 'https://{{ frmn_host }}/'
+  :username: '{{ vault_foreman_admin_usr  }}'
+  :password: '{{ vault_foreman_admin_pwd  }}'
+
+:log_dir: '~/.foreman.log'
+:log_level: 'debug'

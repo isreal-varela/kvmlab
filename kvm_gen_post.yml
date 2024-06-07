@@ -1,0 +1,71 @@
+---
+- hosts: foreman_host        # was localhost
+  gather_facts: false
+
+  vars:
+    frmn_gen_name: "{{ dns_name | replace('.', '_') | upper }}"
+    frmn_org: "Default Organization"
+    # frmn_org: "{{ dns_name | upper }} Organization"
+    frmn_loc: "Default Location"
+    # frmn_loc: "{{ dns_name | upper }} Location"
+    frmn_lce: "Lab"
+    frmn_hostgroup_name: "{{ dns_name | replace('.', '_') | upper }} Hostgroup"
+    frmn_act_key: "{{ dns_name | replace('.', '_') | upper }} Activation Key"
+    frmn_host: "foreman.{{ dns_name }}"
+    frmn_url: "https://{{ frmn_host }}"
+    frmn_usr: "admin"
+    frmn_pwd: "{{ vault_foreman_admin_pwd }}"
+    frmn_repo_list: []
+    frmn_content_obj_list: []
+    frmn_validate_cert: false
+
+  tasks:
+    - name: "Include task list for Foreman Host/Master config"
+      include_tasks: foreman_host_config.yml
+
+# --------------------------------------------------------------------------------------------------
+
+- hosts: kvms
+  gather_facts: false
+
+  vars:
+    frmn_gen_name: "{{ dns_name | replace('.', '_') | upper }}"
+    frmn_org: "{{ dns_name | upper }} Organization"
+    frmn_loc: "{{ dns_name | upper }} Location"
+    frmn_hostgroup_name: "{{ dns_name | replace('.', '_') | upper }} Hostgroup"
+    frmn_act_key: "{{ dns_name | replace('.', '_') | upper }} Activation Key"
+    frmn_host: "foreman.{{ dns_name }}"
+    frmn_url: "https://{{ frmn_host }}"
+    frmn_usr: "admin"
+    frmn_pwd: "{{ vault_foreman_admin_pwd }}"
+    frmn_repo_list: []
+    frmn_content_obj_list: []
+    frmn_validate_cert: false
+
+  tasks:
+    - name: "Placeholder for KVM-specific tasks"
+      debug:
+        var: frmn_gen_name
+
+##### Appears that "registration_command" module is part of v4.1.0-dev of Foreman Ansible stuff
+#####   and not available to us with 3.11
+#    - name: "Generate registration command"
+#      theforeman.foreman.registration_command:
+#        username: "{{ frmn_usr }}"
+#        password: "{{ frmn_pwd }}"
+#        server_url: "{{ frmn_url }}"
+#        validate_certs: "{{ frmn_validate_cert }}"
+#      register: command
+
+#    - name: "Check 'command' value"
+#      debug:
+#        var: command
+
+#    - name: "Perform registration"
+#      ansible.builtin.shell:
+#        cmd: "{{ command.registration_command }}"
+
+    ## ----------------------------------------------------------- ##
+    ## 
+    ## ----------------------------------------------------------- ##
+

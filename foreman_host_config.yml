@@ -1,0 +1,263 @@
+---
+
+  - name: "Create local user foreman folders"
+    ansible.builtin.file:
+      # path: "/home/ansible/.foreman/log"
+      path: "~/.foreman/log"
+      recurse: true
+      owner: ansible
+      group: ansible
+      mode: u+rw,g-wx,o-rwx
+
+  - name: "Create foreman.cfg"
+    template:
+      src: foreman.cfg.j2
+      # dest: /home/ansible/.foreman/foreman.cfg
+      dest: ~/.foreman/foreman.cfg
+      owner: ansible
+      group: ansible
+
+  - name: "Create foreman.cfg"
+    template:
+      src: foreman.cfg.j2
+      # dest: /home/ansible/.foreman/cli_config.cfg
+      dest: ~/.foreman/cli_config.cfg
+      owner: ansible
+      group: ansible
+
+  - name: "Create organization"
+    theforeman.foreman.organization:
+      name: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      server_url: "{{ frmn_url }}"
+      password: "{{ frmn_pwd }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create location"
+    theforeman.foreman.location:
+      name: "{{ frmn_loc }}"
+      organizations:
+        - "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      server_url: "{{ frmn_url }}"
+      password: "{{ frmn_pwd }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create domain"
+    theforeman.foreman.domain:
+      name: "{{ dns_name }}"
+      organizations:
+        - "{{ frmn_org }}"
+      locations:
+        - "{{ frmn_loc }}"
+      username: "{{ frmn_usr }}"
+      server_url: "{{ frmn_url }}"
+      password: "{{ frmn_pwd }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    
+  - name: "Create lifecycle env"
+    theforeman.foreman.lifecycle_environment:
+      name: "{{ frmn_lce }}"
+      label: "{{ frmn_lce | lower }}"
+      organization: "{{ frmn_org }}"
+      description: "{{ frmn_gen_name }} - Lab Environment"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: Create libvirt compute resource
+    theforeman.foreman.compute_resource:
+      name: "{{ frmn_gen_name }} - Compute Resource"
+      organizations:
+        - "{{ frmn_org }}"
+      locations:
+        - "{{ frmn_loc }}"
+      provider: libvirt
+      provider_params:
+        url: qemu+ssh://192.168.100.252/system
+        display_type: vnc
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  ## ------------------------------------------------------------------------------------------
+  ## Foreman repo related objects ##
+  - name: "Create Foreman EL 9 Client Product"
+    theforeman.foreman.product:
+      name: "Foreman EL 9 Client Product"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create Foreman repository"
+    theforeman.foreman.repository:
+      name: "Foreman EL 9 Client Repo"
+      # name: "{{ frmn_gen_name }} - Foreman EL 9 Client Repo"
+      content_type: "yum"
+      product: "Foreman EL 9 Client Product"
+      organization: "{{ frmn_org }}"
+      url: "http://yum.theforeman.org/client/nightly/el9/x86_64/"
+      # mirror_on_sync: true
+      mirroring_policy: mirror_content_only
+      download_policy: on_demand
+      os_versions: []
+      arch: "x86_64"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Sync repository"
+    theforeman.foreman.repository_sync:
+      repository: "Foreman EL 9 Client Repo"
+      # repository: "{{ frmn_gen_name }} - Foreman EL 9 Client Repo"
+      product: "Foreman EL 9 Client Product"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      server_url: "{{ frmn_url }}"
+    when: ( run_sync | default( false ) )
+
+  ## ------------------------------------------------------------------------------------------
+  ## Rocky repo related objects ##
+  - name: "Create Rocky 9 Product"
+    theforeman.foreman.product:
+      name: "Rocky9"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create Rocky repository/repositories"
+    theforeman.foreman.repository:
+      name: "Rocky 9 - {{ item }} Repo"
+      # name: "{{ frmn_gen_name }} - Rocky 9 - {{ item }} Repo"
+      content_type: "yum"
+      product: "Rocky9"
+      organization: "{{ frmn_org }}"
+      url: "http://dl.rockylinux.org/pub/rocky/9/{{ item }}/x86_64/os/"
+      # mirror_on_sync: true
+      mirroring_policy: mirror_content_only
+      download_policy: on_demand
+      os_versions: []
+      arch: "x86_64"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    with_items:
+      - AppStream
+      - BaseOS
+      - extras
+
+  - name: "Sync repository"
+    theforeman.foreman.repository_sync:
+      repository: "Rocky 9 - {{ item }} Repo"
+      # repository: "{{ frmn_gen_name }} - Rocky 9 - {{ item }} Repo"
+      product: "Rocky9"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+    with_items:
+      - AppStream
+      - BaseOS
+      - extras
+    when: ( run_sync | default( false ) )
+
+  - name: "Create or update weekly Rocky sync plan"
+    theforeman.foreman.sync_plan:
+      name: "Weekly Rocky Sync"
+      organization: "{{ frmn_org }}"
+      interval: "weekly"
+      enabled: true
+      sync_date: "2024-06-01 00:00:00 UTC"
+      products:
+        - 'Rocky9'
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create content view"
+    theforeman.foreman.content_view:
+      name: "APE Content View"
+      organization: "{{ frmn_org }}"
+      repositories:
+        - { name: "Foreman EL 9 Client Repo", product: "Foreman EL 9 Client Product" }
+        - { name: "Rocky 9 - BaseOS Repo",    product: "Rocky9" }
+        - { name: "Rocky 9 - AppStream Repo", product: "Rocky9" }
+        - { name: "Rocky 9 - extras Repo",    product: "Rocky9" }
+      # auto_publish: true
+      solve_dependencies: true
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Ensure content view v1.0 is published into lab"
+    theforeman.foreman.content_view_version:
+      content_view: "APE Content View"
+      organization: "{{ frmn_org }}"
+      version: "1.0"
+      # lifecycle_environments:
+      #   - Lab
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create client activation key"
+    theforeman.foreman.activation_key:
+      name: "{{ frmn_act_key }}"
+      organization: "{{ frmn_org }}"
+      # lifecycle_environment: "Lab"
+      content_view: "APE Content View"
+      content_overrides:
+        - { label: "Default_Organization_Foreman_EL_9_Client_Product_Foreman_EL_9_Client_Repo", override: enabled }
+        - { label: "Default_Organization_Rocky9_Rocky_9_-_BaseOS_Repo",                         override: enabled }
+        - { label: "Default_Organization_Rocky9_Rocky_9_-_AppStream_Repo",                      override: enabled }
+        - { label: "Default_Organization_Rocky9_Rocky_9_-_extras_Repo",                         override: enabled }
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create APE hostgroup"
+    theforeman.foreman.hostgroup:
+      name: "{{ frmn_hostgroup_name }}"
+      organization: "{{ frmn_org }}"
+      locations: "{{ frmn_loc }}"
+      domain: "{{ dns_name }}"
+      architecture: "x86_64"
+      operatingsystem: "Rocky Linux 9.3"
+      # lifecycle_environment: "Lab"
+      # subnet: ""
+      content_view: "APE Content View"
+      openscap_proxy: "{{ frmn_host }}"
+      activation_keys: "{{ frmn_act_key }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present

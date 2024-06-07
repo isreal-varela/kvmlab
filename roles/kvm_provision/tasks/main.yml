@@ -14,12 +14,12 @@
         verbosity: 2
 
     - name: Ensure requirements in place
+      become: true
       package:
         name:
+          # Look in roles/kvm_provision/vars/R*.yml files for list of packages
           "{{ kvm_prereq_pkgs }}"
-        # Look in roles/kvm_provision/vars/R*.yml files for list of packages
         state: present
-      become: true
 
   when: not( skip_prereqs | default(false) )
 
@@ -32,6 +32,9 @@
     command: list_vms
   register: existing_vms
   changed_when: false
+  tags:
+    - kvm_pre_cfg
+    - kvm_prov
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # START: Create VM block
@@ -54,6 +57,9 @@
           - "            vm_ip_addr: {{ vm_ip_addr }}"
           - "              vm_roles: '{{ vm_roles }}'"
         verbosity: 0
+      tags:
+        - kvm_pre_cfg
+        - kvm_prov
 
     - name: Create KVM-specific folder within libvirt
       become: true
@@ -63,6 +69,8 @@
         group: libvirt
         state: directory
         mode: '0775'
+      tags:
+        - kvm_prov
 
     - name: Copy base image to KVM-specific folder
       become: true
@@ -75,21 +83,31 @@
         group: libvirt
         mode: 0600
       register: copy_results
+      tags:
+        - kvm_prov
 
     - name: Copy cloud-init meta data
       template: "src=meta-data.j2 dest={{ cloud_init_meta_data }} mode=0777 owner=qemu group=libvirt"
       become: true
+      tags:
+        - kvm_prov
     - name: Copy cloud-init user data
       template: "src=user-data.j2 dest={{ cloud_init_user_data }} mode=0777 owner=qemu group=libvirt"
       become: true
+      tags:
+        - kvm_prov
     - name: Copy cloud-init network config
       template: "src=network-config.j2 dest={{ cloud_init_network_config }} mode=0777 owner=qemu group=libvirt"
       become: true
+      tags:
+        - kvm_prov
 
     - name: Configure the cloud-init iso
       become: true
       command: |
         genisoimage -output {{ libvirt_pool_dir }}/{{ vm_name }}/firstboot.iso -V cidata -r -J {{ cloud_init_user_data }} {{ cloud_init_meta_data }} {{ cloud_init_network_config }}
+      tags:
+        - kvm_prov
 
     - name: Define vm
       become: true
@@ -97,12 +115,16 @@
         command: define
         autostart: true
         xml: "{{ lookup('template', 'vm-template.xml.j2') }}"
+      tags:
+        - kvm_prov
 
     - name: Resize root disk
       become: true
       command: |
         qemu-img resize {{ libvirt_pool_dir }}/{{ vm_name }}/disk01.qcow2 {{ vm_root_disk }}
       when: ( vm_root_disk != vm_disk )
+      tags:
+        - kvm_prov
 
   when: ( vm_name not in existing_vms.list_vms )
 
@@ -118,14 +140,21 @@
   until: "vm_start_results is success"
   retries: 15
   delay: 2
+  tags:
+    - kvm_pre_cfg
+    - kvm_prov
 
 - name: Add host to overarching 'kvms' group
   ansible.builtin.add_host:
     hostname: "{{ vm_name }}"
     groups: "kvms"
+  tags:
+    - kvm_pre_cfg
 
 - name: Add host to specified groups (based on roles)
   ansible.builtin.add_host:
     hostname: "{{ vm_name }}"
     groups: "{{ vm_roles }}"
+  tags:
+    - kvm_pre_cfg
 

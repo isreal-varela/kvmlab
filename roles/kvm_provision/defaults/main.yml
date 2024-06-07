@@ -9,7 +9,7 @@ cloud_init_network_config: "{{ libvirt_pool_dir }}/network-config"
 vm_vcpus: 4
 vm_ram_mb: 2048
 vm_net: br0
-vm_disk: '40G'
+vm_disk: '80G'
 vm_root_pass: "{{ vault_kvm_os_usr_root_pwd }}"
 ansible_user_ssh_key: "{{ vault_kvm_os_usr_ans_keyfile }}"
 ip_addr: 192.168.100.99
