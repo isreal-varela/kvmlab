@@ -104,6 +104,14 @@
     #   ansible.builtin.shell:
     #     cmd: "{{ command.registration_command }}"
 
+    - name: "Disable list of internet-accessed repositories"
+      community.general.dnf_config_manager:
+        name:
+          - appstream
+          - baseos
+          - extras
+        state: disabled
+
     ## ----------------------------------------------------------- ##
     ## 
     ## ----------------------------------------------------------- ##

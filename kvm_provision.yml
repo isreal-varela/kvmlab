@@ -79,6 +79,11 @@
   tags:
     - mirror-reg_cfg
 
+- name: Include a play for Hashicorp Vault
+  ansible.builtin.import_playbook: vault.yml
+  tags:
+    - vault_cfg
+
 - name: Include a play for Syslog Servers/Clients 
   ansible.builtin.import_playbook: logging.yml
   tags:
