@@ -30,8 +30,11 @@
 
   vars:
     frmn_gen_name: "{{ dns_name | replace('.', '_') | upper }}"
-    frmn_org: "{{ dns_name | upper }} Organization"
-    frmn_loc: "{{ dns_name | upper }} Location"
+    frmn_org: "Default Organization"
+    # frmn_org: "{{ dns_name | upper }} Organization"
+    frmn_loc: "Default Location"
+    # frmn_loc: "{{ dns_name | upper }} Location"
+    frmn_lce: "Lab"
     frmn_hostgroup_name: "{{ dns_name | replace('.', '_') | upper }} Hostgroup"
     frmn_act_key: "{{ dns_name | replace('.', '_') | upper }} Activation Key"
     frmn_host: "foreman.{{ dns_name }}"
@@ -43,27 +46,63 @@
     frmn_validate_cert: false
 
   tasks:
-    - name: "Placeholder for KVM-specific tasks"
-      debug:
-        var: frmn_gen_name
+    # - name: "Placeholder for KVM-specific tasks"
+    #   debug:
+    #     var: frmn_gen_name
 
-##### Appears that "registration_command" module is part of v4.1.0-dev of Foreman Ansible stuff
-#####   and not available to us with 3.11
-#    - name: "Generate registration command"
-#      theforeman.foreman.registration_command:
-#        username: "{{ frmn_usr }}"
-#        password: "{{ frmn_pwd }}"
-#        server_url: "{{ frmn_url }}"
-#        validate_certs: "{{ frmn_validate_cert }}"
-#      register: command
+    # ---------------------------------------------------------------------------
+    - name: "Query for Host"
+      shell: |
+        hammer --output json host info --name '{{ inventory_hostname }}.{{ dns_name }}' | jq '.Id'
+      register: hammer_qry
+      failed_when: false
+      changed_when: false
+    - name: "Set frmn_host_exists fact"
+      set_fact:
+        frmn_host_exists: "{% if ( hammer_qry.rc != 0 ) or ( hammer_qry.stdout == '' ) %}false{% else %}true{% endif %}"
 
-#    - name: "Check 'command' value"
-#      debug:
-#        var: command
+    # - name: "Create host"
+    #   shell: |
+    #     hammer host create --name "{{ dns_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
+    #   when: ( frmn_host_exists == false )
+    #   register: hammer_out
+    #   failed_when: 
+    #     - ( hammer_out.rc != 0 )
+    #     - ( hammer_out.rc != 65 )
+    #     - '"Name has already been taken" not in hammer_out.stdout'
 
-#    - name: "Perform registration"
-#      ansible.builtin.shell:
-#        cmd: "{{ command.registration_command }}"
+    - name: "Update host"
+      shell: |
+        hammer host update --name "{{ inventory_hostname }}.{{ dns_name }}" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroup "{{ frmn_hostgroup_name }}"
+      # --comment="Updated (UTC): {{ now(utc=true,fmt='%Y-%m-%d %H:%M:%S') }}"
+      when: ( frmn_host_exists == true )
+      register: hammer_out
+      failed_when: 
+        - ( hammer_out.rc != 0 )
+        - ( hammer_out.rc != 65 )
+        - '"Name has already been taken" not in hammer_out.stdout'
+      changed_when: '"Host updated" in hammer_out.stdout'
+    # - name: "Debug 'frmn_host_exists'"
+    #   debug:
+    #     var: hammer_out
+
+    ##### Appears that "registration_command" module is part of v4.1.0-dev of Foreman Ansible stuff
+    #####   and not available to us with 3.11
+    # - name: "Generate registration command"
+    #   theforeman.foreman.registration_command:
+    #     username: "{{ frmn_usr }}"
+    #     password: "{{ frmn_pwd }}"
+    #     server_url: "{{ frmn_url }}"
+    #     validate_certs: "{{ frmn_validate_cert }}"
+    #   register: command
+
+    # - name: "Check 'command' value"
+    #   debug:
+    #     var: command
+
+    # - name: "Perform registration"
+    #   ansible.builtin.shell:
+    #     cmd: "{{ command.registration_command }}"
 
     ## ----------------------------------------------------------- ##
     ## 
