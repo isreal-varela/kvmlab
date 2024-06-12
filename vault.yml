@@ -13,15 +13,15 @@
 - name: Configure firewall, folders, config files, etc. for Hashicorp Vault
   hosts: vault_host
   tasks:
-    # - name: Allow incoming API traffic to the local host and then to pod
-    #   ansible.builtin.include_role:
-    #     name: rhel-system-roles.firewall
-    #   vars:
-    #     firewall:
-    #       - port: 8443/tcp
-    #         state: enabled
-    #         runtime: true
-    #         permanent: true
+    - name: Allow incoming traffic to the local host
+      ansible.builtin.include_role:
+        name: rhel-system-roles.firewall
+      vars:
+        firewall:
+          - {zone: public,
+             service: [http, https],
+             port: [ '8200/tcp', '8201/tcp', '9090/tcp' ],
+             state: enabled}
     - name: Create target folder for software upload
       ansible.builtin.file:
         path: /srv/vault_install

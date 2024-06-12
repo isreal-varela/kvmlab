@@ -1,0 +1,13 @@
+frmn_gen_name: "{{ dns_name | replace('.', '_') | upper }}"
+frmn_org: "Default Organization"
+frmn_loc: "Default Location"
+frmn_lce: "{{ frmn_gen_name }}_LCE"
+frmn_hostgroup_name: "{{ frmn_gen_name }} Hostgroup"
+frmn_act_key: "{{ frmn_gen_name }} Activation Key"
+frmn_host: "foreman.{{ dns_name }}"
+frmn_url: "https://{{ frmn_host }}"
+frmn_usr: "admin"
+frmn_pwd: "{{ vault_foreman_admin_pwd }}"
+frmn_repo_list: []
+frmn_content_obj_list: []
+frmn_validate_cert: false

@@ -7,7 +7,7 @@ storage "raft" {
   node_id = "raft_node_id"
 }
 listener "tcp" {
-  address       = "127.0.0.1:8200"
+  address       = "{{ ansible_default_ipv4.address }}:8200"
   tls_cert_file = "/etc/pki/tls/certs/{{ inventory_hostname }}.crt"
   tls_key_file  = "/etc/pki/tls/private/{{ inventory_hostname }}.key"
 }
