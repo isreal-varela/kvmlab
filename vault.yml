@@ -1,0 +1,62 @@
+---
+- name: Generate certificates for use with Hashicorp Vault
+  hosts: vault_host
+  roles:
+    - rhel-system-roles.certificate
+  vars:
+    certificate_requests:
+      - name: "{{ inventory_hostname }}"
+        dns: "{{ inventory_hostname }}.{{ dns_name }}"
+        principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
+        ca: ipa
+
+- name: Configure firewall, folders, config files, etc. for Hashicorp Vault
+  hosts: vault_host
+  tasks:
+    - name: Allow incoming traffic to the local host
+      ansible.builtin.include_role:
+        name: rhel-system-roles.firewall
+      vars:
+        firewall:
+          - {zone: public,
+             service: [http, https],
+             port: [ '8200/tcp', '8201/tcp', '9090/tcp' ],
+             state: enabled}
+    - name: Create target folder for software upload
+      ansible.builtin.file:
+        path: /srv/vault_install
+        state: directory
+        owner: ansible
+        mode: '0755'
+    ## Start - Temporary tasks because extracted files are supposed to go /usr/local/bin (per existing playbook)
+    ##  
+    - name: Create target vault configuration files
+      ansible.builtin.file:
+        path: /opt/vault
+        state: directory
+        owner: ansible
+        mode: '0755'
+    - name: Create folder for Raft data storage
+      ansible.builtin.file:
+        path: /opt/vault/raft/data
+        state: directory
+        owner: ansible
+        mode: '0755'
+    - name: Stage 'vault' archive on target for later execution
+      become: false
+      ansible.builtin.unarchive:
+        src: /srv/software/vault_1.16.3+ent.fips1402_linux_amd64.zip
+        dest: /opt/vault
+    - name: Stage 'vault' configuration file
+      become: false
+      template:
+        src: vault.hcl.j2
+        dest: /opt/vault/vault.hcl
+        owner: ansible
+        group: ansible
+    - name: Set vault binary capabilities
+      capabilities:
+        path: /opt/vault/vault
+        capability: cap_ipc_lock+ep
+        state: present
+    ## End - Temporary tasks because extracted files are supposed to go /usr/local/bin (per existing playbook)

@@ -24,7 +24,7 @@
             permanent: true
     - name: Create target folder for software upload
       ansible.builtin.file:
-        path: /home/ansible/mr
+        path: /srv/quay_install
         state: directory
         owner: ansible
         mode: '0755'
@@ -43,11 +43,11 @@
       become: false
       ansible.builtin.unarchive:
         src: /srv/software/mirror-registry.tar.gz
-        dest: /home/ansible/mr
+        dest: /srv/quay_install
     - name: Execute mirror-registry installer
       become: true
       ansible.builtin.shell: |
-        cd /home/ansible/mr &&
+        cd /srv/quay_install &&
         ./mirror-registry install --quayHostname "{{ inventory_hostname }}.{{ dns_name }}" \
                                   --quayRoot /opt/quay \
                                   --initUser admin \

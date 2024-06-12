@@ -35,5 +35,5 @@ all:
       - {name: "vault",      ip_addr: "192.168.100.42", enabled: true,  roles: ["vault_host",    "nbde_clients", "ipa_client", "logger_client"]}
       - {name: "logger",     ip_addr: "192.168.100.43", enabled: true,  roles: ["logger_host",   "nbde_clients", "ipa_client"]}
       - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients", "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480}
-      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients", "ipa_client", "logger_client"], rt_disk: '80G'}
+      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients", "ipa_client", "logger_client"], rt_disk: '120G'}
 

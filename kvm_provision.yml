@@ -20,6 +20,9 @@
       become: true
       with_items:
         - '{{ kvm_list | selectattr("enabled") | list }}'
+      tags:
+        - kvm_prov
+        - kvm_pre_cfg
 
     - name: KVM Provision role
       include_role:
@@ -39,21 +42,54 @@
         cloud_init_network_config: "{{ libvirt_pool_dir }}/{{ item.name }}/network-config"
       with_items:
         - '{{ kvm_list | selectattr("enabled") | list }}'
+      tags:
+        - kvm_prov
+        - kvm_pre_cfg
 
-- name: Include a play for generic KVM configuration
-  ansible.builtin.import_playbook: kvm_generic.yml
+- name: Include a play for generic KVM "PRE" configuration
+  ansible.builtin.import_playbook: kvm_gen_pre.yml
+  tags:
+    - kvm_pre_cfg
 
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
+  tags:
+    - nbde_cfg
 
 - name: Include a play for IPA Server/Client
   ansible.builtin.import_playbook: ipa.yml
-
-- name: Include a play for Mirror-Registry
-  ansible.builtin.import_playbook: registry.yml
+  tags:
+    - ipa_cfg
 
 - name: Include a play for Foreman
   ansible.builtin.import_playbook: foreman.yml
+  tags:
+    - foreman_cfg
+
+      #- name: Hydrate foreman
+      #  debug:
+      #    msg: "Need to Hydrate foreman with packages, etc."
+
+      #- name: Reconfigure KVMs
+      #  debug:
+      #    msg: "Disable internet-accessible repos and point to Foreman"
+
+- name: Include a play for Mirror-Registry
+  ansible.builtin.import_playbook: registry.yml
+  tags:
+    - mirror-reg_cfg
+
+- name: Include a play for Hashicorp Vault
+  ansible.builtin.import_playbook: vault.yml
+  tags:
+    - vault_cfg
 
 - name: Include a play for Syslog Servers/Clients 
   ansible.builtin.import_playbook: logging.yml
+  tags:
+    - logger_cfg
+
+- name: Include a play for generic KVM "POST" configuration
+  ansible.builtin.import_playbook: kvm_gen_post.yml
+  tags:
+    - kvm_post_cfg

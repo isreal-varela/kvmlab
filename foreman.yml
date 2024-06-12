@@ -29,7 +29,6 @@
              state: enabled}
 
     - name: Add Foreman repository
-      #sudo dnf -y install https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
       shell: |
         sudo dnf -y install https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
       # ansible.builtin.yum_repository:
@@ -60,19 +59,17 @@
       #   repo-gpgcheck: true
       #   state: present
 
-    # - name: Download the foreman-installer
-    #   #sudo dnf -y install foreman-installer
-    #   ansible.builtin.dnf:
-    #     name: foreman-installer
-    #     state: present
-    #   # when: false
-
     - name: Download the foreman-installer-katello
-      #sudo dnf -y install foreman-installer-katello
+      # sudo dnf -y install foreman-installer-katello
       ansible.builtin.dnf:
         name: foreman-installer-katello
         state: present
-      # when: false
+
+    - name: Download the ansiblerole-foreman_scap_client
+      # sudo dnf -y install foreman-installer-katello
+      ansible.builtin.dnf:
+        name: ansiblerole-foreman_scap_client
+        state: present
 
     - name: Execute foreman-installer
       # sudo foreman-installer
@@ -85,9 +82,14 @@
           --foreman-initial-admin-last-name='Administator' \
           --foreman-initial-admin-username='admin' \
           --foreman-initial-admin-password='{{ vault_foreman_admin_pwd }}' \
+          --enable-foreman-compute-libvirt \
+          --enable-foreman-plugin-openscap \
+          --enable-foreman-proxy-plugin-openscap \
+          --enable-foreman-cli-openscap \
+          --enable-foreman-plugin-ansible \
+          --enable-foreman-proxy-plugin-ansible \
           -l INFO
       register: fm_install_rc
-      # when: false
 
       # HOLDING PEN FOR OTHER POSSIBLE CLI PARAMETERS
       #    --foreman-proxy-ssl=true \

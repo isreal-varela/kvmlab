@@ -1,0 +1,332 @@
+---
+
+  - name: "Include shared Foreman environment-specific variables"
+    ansible.builtin.include_vars: frmn.yml
+
+  # ---------------------------------------------------------------------------
+  #  Setup Hammer CLI-related configuration files
+
+  - name: "Create local user foreman folders"
+    ansible.builtin.file:
+      path: "~/.foreman/log"
+      recurse: true
+      owner: ansible
+      group: ansible
+      mode: u+rw,g-wx,o-rwx
+
+  - name: "Create foreman.cfg"
+    template:
+      src: foreman.cfg.j2
+      dest: ~/.foreman/foreman.cfg
+      owner: ansible
+      group: ansible
+
+  - name: "Create foreman.cfg"
+    template:
+      src: foreman.cfg.j2
+      dest: ~/.foreman/cli_config.cfg
+      owner: ansible
+      group: ansible
+
+  # - name: "Test Hammer CLI Output - ORIGINAL"
+  #   shell: |
+  #     hammer -c ~/.foreman/cli_ORIGINAL_HOST.cfg --verify-ssl false  organization list
+  #     hammer -c ~/.foreman/cli_ORIGINAL_HOST.cfg --verify-ssl false  location     list
+  #     hammer -c ~/.foreman/cli_ORIGINAL_HOST.cfg --verify-ssl false  scap-content list
+  #     hammer -c ~/.foreman/cli_ORIGINAL_HOST.cfg --verify-ssl false  policy       list
+  #     hammer -c ~/.foreman/cli_ORIGINAL_HOST.cfg --verify-ssl false  policy       info --id 1
+  #   register: hammer_out
+  #   failed_when: false
+  #   changed_when: false
+  # - name: "Hammer output"
+  #   debug:
+  #     var: hammer_out
+
+  # - name: "Test Hammer CLI Output - NEW/SANDBOX"
+  #   shell: |
+  #     hammer organization list
+  #     hammer location     list
+  #     hammer scap-content list
+  #     hammer policy       list
+  #     hammer policy       info --id 1
+  #   register: hammer_out
+  #   failed_when: false
+  #   changed_when: false
+  # - name: "Hammer output"
+  #   debug:
+  #     var: hammer_out
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Create domain"
+    theforeman.foreman.domain:
+      name: "{{ dns_name }}"
+      organizations:
+        - "{{ frmn_org }}"
+      locations:
+        - "{{ frmn_loc }}"
+      username: "{{ frmn_usr }}"
+      server_url: "{{ frmn_url }}"
+      password: "{{ frmn_pwd }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  # ---------------------------------------------------------------------------
+  - name: "Create lifecycle env"
+    theforeman.foreman.lifecycle_environment:
+      name: "{{ frmn_lce }}"
+      label: "{{ frmn_lce | lower }}"
+      organization: "{{ frmn_org }}"
+      description: "Created via Ansible playbook"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  # ---------------------------------------------------------------------------
+  #  Misc. settings
+  - name: "Change Instance Title"
+    shell: |
+      hammer settings set --name instance_title --value "BeetleD - Sandbox"
+      hammer settings set --name instance_color --value "#FF5133"
+      hammer settings set --name lab_features --value true
+      hammer settings set --name remote_execution_ssh_user --value "ansible"
+      hammer settings set --name ansible_ssh_private_key_file --value "/usr/share/foreman-proxy/.ssh/id_rsa_foreman_proxy"
+    # failed_when: false
+
+  # ---------------------------------------------------------------------------
+  #  Product and Repository object configuration
+
+  # == Foreman repo related objects
+
+  - name: "Create Foreman EL 9 Client Product"
+    theforeman.foreman.product:
+      name: "Foreman EL 9 Client Product"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create Foreman repository"
+    theforeman.foreman.repository:
+      name: "Foreman EL 9 Client Repo"
+      content_type: "yum"
+      product: "Foreman EL 9 Client Product"
+      organization: "{{ frmn_org }}"
+      url: "http://yum.theforeman.org/client/nightly/el9/x86_64/"
+      # mirror_on_sync: true
+      mirroring_policy: mirror_content_only
+      download_policy: on_demand
+      os_versions: []
+      arch: "x86_64"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Sync repository"
+    theforeman.foreman.repository_sync:
+      repository: "Foreman EL 9 Client Repo"
+      product: "Foreman EL 9 Client Product"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      server_url: "{{ frmn_url }}"
+    # when: ( run_sync | default( false ) )
+
+  # == Rocky repo related objects ##
+
+  - name: "Create Rocky 9 Product"
+    theforeman.foreman.product:
+      name: "Rocky9"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create Rocky repositories"
+    theforeman.foreman.repository:
+      name: "Rocky 9 - {{ item }} Repo"
+      content_type: "yum"
+      product: "Rocky9"
+      organization: "{{ frmn_org }}"
+      url: "http://dl.rockylinux.org/pub/rocky/9/{{ item }}/x86_64/os/"
+      # mirror_on_sync: true
+      mirroring_policy: mirror_content_only
+      download_policy: on_demand
+      os_versions: []
+      arch: "x86_64"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    with_items:
+      - AppStream
+      - BaseOS
+      - extras
+
+  - name: "Sync repositories"
+    theforeman.foreman.repository_sync:
+      repository: "Rocky 9 - {{ item }} Repo"
+      product: "Rocky9"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+    with_items:
+      - AppStream
+      - BaseOS
+      - extras
+    # when: ( run_sync | default( false ) )
+
+  - name: "Create or update weekly Foreman/Rocky sync plan"
+    theforeman.foreman.sync_plan:
+      name: "Weekly Foreman/Rocky Sync"
+      organization: "{{ frmn_org }}"
+      interval: "weekly"
+      enabled: true
+      sync_date: "2024-06-01 00:00:00 UTC"
+      products:
+        - 'Rocky9'
+        - 'Foreman EL 9 Client Product'
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Create content view"
+    theforeman.foreman.content_view:
+      name: "APE Content View"
+      organization: "{{ frmn_org }}"
+      repositories:
+        - { name: "Foreman EL 9 Client Repo", product: "Foreman EL 9 Client Product" }
+        - { name: "Rocky 9 - BaseOS Repo",    product: "Rocky9" }
+        - { name: "Rocky 9 - AppStream Repo", product: "Rocky9" }
+        - { name: "Rocky 9 - extras Repo",    product: "Rocky9" }
+      solve_dependencies: true
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Ensure content view v1.0 is published into lab"
+    theforeman.foreman.content_view_version:
+      content_view: "APE Content View"
+      organization: "{{ frmn_org }}"
+      version: "1.0"
+      lifecycle_environments:
+        - "{{ frmn_lce }}"
+        - "Library"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Create client activation key"
+    theforeman.foreman.activation_key:
+      name: "{{ frmn_act_key }}"
+      organization: "{{ frmn_org }}"
+      lifecycle_environment: "{{ frmn_lce }}"
+      content_view: "APE Content View"
+      content_overrides:
+        - { label: "Default_Organization_Foreman_EL_9_Client_Product_Foreman_EL_9_Client_Repo", override: enabled }
+        - { label: "Default_Organization_Rocky9_Rocky_9_-_BaseOS_Repo",                         override: enabled }
+        - { label: "Default_Organization_Rocky9_Rocky_9_-_AppStream_Repo",                      override: enabled }
+        - { label: "Default_Organization_Rocky9_Rocky_9_-_extras_Repo",                         override: enabled }
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Create APE hostgroup"
+    theforeman.foreman.hostgroup:
+      name: "{{ frmn_hostgroup_name }}"
+      organization: "{{ frmn_org }}"
+      locations: "{{ frmn_loc }}"
+      domain: "{{ dns_name }}"
+      architecture: "x86_64"
+      operatingsystem: "Rocky Linux 9.3"
+      lifecycle_environment: "{{ frmn_lce }}"
+      content_view: "APE Content View"
+      openscap_proxy: "{{ frmn_host }}"
+      activation_keys: "{{ frmn_act_key }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Bulk upload OpenSCAP content"
+    shell: |
+      hammer scap-content bulk-upload --type 'directory' --directory /usr/share/xml/scap/ssg/content --organization "{{ frmn_org }}" --location "{{ frmn_loc }}"
+    register: hammer_out
+    failed_when: 
+      - ( hammer_out.rc != 0 )
+      - ( hammer_out.rc != 65 )
+
+  # ---------------------------------------------------------------------------
+  - name: "Query for policy"
+    shell: |
+      hammer --output json policy info --name '{{ dns_name }} Policy' | jq '.Id'
+    register: hammer_qry
+    failed_when: false
+  - name: "Set frmn_policy_exists fact"
+    set_fact:
+      frmn_policy_exists: "{% if ( hammer_qry.rc != 0 ) or ( hammer_qry.stdout == '' ) %}false{% else %}true{% endif %}"
+
+  - name: "Create policy"
+    shell: |
+      hammer policy create --name "{{ dns_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
+    when: ( frmn_policy_exists == false )
+    register: hammer_out
+    failed_when: 
+      - ( hammer_out.rc != 0 )
+      - ( hammer_out.rc != 65 )
+      - '"Name has already been taken" not in hammer_out.stdout'
+
+  - name: "Update policy"
+    shell: |
+      hammer policy update --name "{{ dns_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
+    when: ( frmn_policy_exists == true )
+    register: hammer_out
+    failed_when: 
+      - ( hammer_out.rc != 0 )
+      - ( hammer_out.rc != 65 )
+      - '"Name has already been taken" not in hammer_out.stdout'
+
+  # ---------------------------------------------------------------------------
+  #  When using the "generate-command", it would be used for any previously
+  #    un-registered host
+  - name: "Generate host-registration command"
+    shell: |
+      hammer host-registration generate-command --activation-keys "{{ frmn_act_key }}"
+    register: hammer_out
+  - name: "Set frmn_reg_cmd fact"
+    set_fact:
+      frmn_reg_cmd: "{{ hammer_out.stdout }}"
+
+  - name: "Generated registration command"
+    debug:
+      var: frmn_reg_cmd
+  # ---------------------------------------------------------------------------

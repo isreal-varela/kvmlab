@@ -13,7 +13,7 @@
             runtime: true
             permanent: true
 
-- name: Configure syslog server to recieve remote log messages and store them locally
+- name: Configure syslog server to receive remote log messages and store them locally
   hosts: logger_host
   roles:
     - rhel-system-roles.logging
