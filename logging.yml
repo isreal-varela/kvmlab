@@ -1,5 +1,6 @@
 ---
 - name: Configure firewalld or syslog server
+  become: true
   hosts: logger_host
   tasks:
     - name: Allow incoming syslog traffic to the local host

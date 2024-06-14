@@ -26,6 +26,7 @@
   roles:
   - role: ipaserver
     state: present
+  tags: ipa_cfg_server
 
 - name: Playbook to configure IPA clients
   hosts: ipa_client
@@ -33,3 +34,4 @@
   roles:
   - role: ipaclient
     state: present
+  tags: ipa_cfg_client

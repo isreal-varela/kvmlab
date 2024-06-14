@@ -1,5 +1,7 @@
 ---
+
 - name: Generate certificates for use with Quay mirror registry
+  become: true
   hosts: registry_host
   roles:
     - rhel-system-roles.certificate
@@ -11,6 +13,7 @@
         ca: ipa
 
 - name: Configure firewalld for access to mirror registry
+  become: true
   hosts: registry_host
   tasks:
     - name: Allow incoming API traffic to the local host and then to pod

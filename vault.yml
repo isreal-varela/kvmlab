@@ -1,5 +1,7 @@
 ---
+
 - name: Generate certificates for use with Hashicorp Vault
+  become: true
   hosts: vault_host
   roles:
     - rhel-system-roles.certificate
@@ -11,6 +13,7 @@
         ca: ipa
 
 - name: Configure firewall, folders, config files, etc. for Hashicorp Vault
+  become: true
   hosts: vault_host
   tasks:
     - name: Allow incoming traffic to the local host
