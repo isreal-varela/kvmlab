@@ -90,6 +90,12 @@
   tags:
     - logger_cfg
 
+- name: Include "miscellaneous" tasks
+  ansible.builtin.import_playbook: misc.yml
+  tags:
+    - misc_cfg
+    - kvm_post_cfg
+
 - name: Include a play for generic KVM "POST" configuration
   ansible.builtin.import_playbook: kvm_gen_post.yml
   tags:
