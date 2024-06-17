@@ -4,7 +4,7 @@ function __usage {
 	echo
 	echo "$(basename $0) <kvm name(s)>"
 	echo "  where zero or more valid KVM names are listed as parameters"
-	echo "  if no parametrs are passed, the default list as defined"
+	echo "  if no parameters are passed, the default list as defined"
 	echo "  within the ansible playbook will be processed."
 	echo
 	exit

@@ -1,14 +1,17 @@
 - name: Open firewall for Tang
   hosts: nbde_servers
+  become: true
   roles:
     - rhel-system-roles.firewall
 
 - name: Deploy NBDE Tang server
   hosts: nbde_servers
+  become: true
   roles:
     - rhel-system-roles.nbde_server
 
 - name: Deploy NBDE Clevis clients
   hosts: nbde_clients
+  become: true
   roles:
     - rhel-system-roles.nbde_client

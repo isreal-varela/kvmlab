@@ -1,8 +1,8 @@
 ---
 
 - name: Generate certificates for use with Foreman
-  become: true
   hosts: foreman_host
+  become: true
   roles:
     - rhel-system-roles.certificate
   vars:
