@@ -1,8 +1,8 @@
 ---
 
-
 - name: Generate certificates for use with Foreman
   hosts: foreman_host
+  become: true
   roles:
     - rhel-system-roles.certificate
   vars:
@@ -92,6 +92,9 @@
       register: fm_install_rc
 
       # HOLDING PEN FOR OTHER POSSIBLE CLI PARAMETERS
+      #    --enable-foreman-plugin-remote-execution \
+      #    --enable-foreman-proxy-plugin-remote-execution-ssh \
+      #    --foreman-proxy-plugin-remote-execution-ssh-install-key=true \
       #    --foreman-proxy-ssl=true \
       #    --foreman-proxy-ssl-ca="/etc/pki/tls/certs/ca-bundle.crt" \
       #    --foreman-proxy-ssl-cert="/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \

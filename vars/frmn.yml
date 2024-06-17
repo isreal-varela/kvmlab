@@ -11,3 +11,7 @@ frmn_pwd: "{{ vault_foreman_admin_pwd }}"
 frmn_repo_list: []
 frmn_content_obj_list: []
 frmn_validate_cert: false
+frmn_hmr_cfg_dir: "~/.foreman"
+frmn_hmr_cfg_file: "{{ frmn_hmr_cfg_dir }}/cli_config.cfg"
+frmn_hmr_log_dir: "{{ frmn_hmr_cfg_dir }}/log"
+frmn_hmr_log_lvl: "debug"

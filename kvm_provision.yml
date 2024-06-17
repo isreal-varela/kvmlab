@@ -57,6 +57,7 @@
     - nbde_cfg
 
 - name: Include a play for IPA Server/Client
+  become: true
   ansible.builtin.import_playbook: ipa.yml
   tags:
     - ipa_cfg

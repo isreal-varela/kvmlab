@@ -6,6 +6,17 @@
     - name: "Include task list for Foreman Host/Master config"
       include_tasks: foreman_host_config.yml
 
+    # ---------------------------------------------------------------------------
+    #  When using the "generate-command", it would be used for any previously
+    #    un-registered host
+    - name: "Generate host-registration command"
+      shell: |
+        hammer -c "{{ frmn_hmr_cfg_file }}" host-registration generate-command --activation-keys "{{ frmn_act_key }}"
+      register: frmn_reg_cmd
+    - name: "Save host-registration command"
+      set_fact:
+        reg_cmd: "{{ frmn_reg_cmd.stdout }}" 
+
 # --------------------------------------------------------------------------------------------------
 
 - hosts: kvms
@@ -37,41 +48,6 @@
     #     var: frmn_gen_name
 
     # ---------------------------------------------------------------------------
-    - name: "Query for Host"
-      shell: |
-        hammer --output json host info --name '{{ inventory_hostname }}.{{ dns_name }}' | jq '.Id'
-      register: hammer_qry
-      failed_when: false
-      changed_when: false
-    - name: "Set frmn_host_exists fact"
-      set_fact:
-        frmn_host_exists: "{% if ( hammer_qry.rc != 0 ) or ( hammer_qry.stdout == '' ) %}false{% else %}true{% endif %}"
-
-    # - name: "Create host"
-    #   shell: |
-    #     hammer host create --name "{{ dns_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
-    #   when: ( frmn_host_exists == false )
-    #   register: hammer_out
-    #   failed_when: 
-    #     - ( hammer_out.rc != 0 )
-    #     - ( hammer_out.rc != 65 )
-    #     - '"Name has already been taken" not in hammer_out.stdout'
-
-    - name: "Update host"
-      shell: |
-        hammer host update --name "{{ inventory_hostname }}.{{ dns_name }}" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroup "{{ frmn_hostgroup_name }}"
-      # --comment="Updated (UTC): {{ now(utc=true,fmt='%Y-%m-%d %H:%M:%S') }}"
-      when: ( frmn_host_exists == true )
-      register: hammer_out
-      failed_when: 
-        - ( hammer_out.rc != 0 )
-        - ( hammer_out.rc != 65 )
-        - '"Name has already been taken" not in hammer_out.stdout'
-      changed_when: '"Host updated" in hammer_out.stdout'
-    # - name: "Debug 'frmn_host_exists'"
-    #   debug:
-    #     var: hammer_out
-
     ##### Appears that "registration_command" module is part of v4.1.0-dev of Foreman Ansible stuff
     #####   and not available to us with 3.11
     # - name: "Generate registration command"
@@ -86,11 +62,19 @@
     #   debug:
     #     var: command
 
-    # - name: "Perform registration"
-    #   ansible.builtin.shell:
-    #     cmd: "{{ command.registration_command }}"
+    - name: "Perform registration"
+      become: true
+      ansible.builtin.shell:
+        cmd: "{{ hostvars[groups['foreman_host'][0]].reg_cmd }}"
+      register: reg_out
+      failed_when: 
+        - ( reg_out.rc != 0 )
+        - ( reg_out.rc != 1 )
+        - '"This system is already reigstered" not in reg_out.stdout'
+      # when: ( frmn_reg_cmd is defined )
 
     - name: "Disable list of internet-accessed repositories"
+      become: true
       community.general.dnf_config_manager:
         name:
           - appstream
@@ -101,4 +85,25 @@
     ## ----------------------------------------------------------- ##
     ## 
     ## ----------------------------------------------------------- ##
+
+- hosts: foreman_host
+  gather_facts: false
+
+  tasks:
+
+    # ---------------------------------------------------------------------------
+    #  Force update to hostgroup for all hosts that should now exist based
+    #    on "registration" above
+    - name: "Ensure hostgroup membership"
+      shell: |
+        hammer -c "{{ frmn_hmr_cfg_file }}" host update --name "{{ item }}.{{ dns_name }}" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroup "{{ frmn_hostgroup_name }}"
+      register: hammer_out
+      failed_when: 
+        - ( hammer_out.rc != 0 )
+        - ( hammer_out.rc != 65 )
+      changed_when: '"Host updated" in hammer_out.stdout'
+      with_items:
+        - '{{ kvm_list | selectattr("enabled") | map(attribute="name") }}'
+
+# --------------------------------------------------------------------------------------------------
 

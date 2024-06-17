@@ -1,6 +1,8 @@
 ---
+
 - name: Generate certificates for use with Hashicorp Vault
   hosts: vault_host
+  become: true
   roles:
     - rhel-system-roles.certificate
   vars:
@@ -12,6 +14,7 @@
 
 - name: Configure firewall, folders, config files, etc. for Hashicorp Vault
   hosts: vault_host
+  become: true
   tasks:
     - name: Allow incoming traffic to the local host
       ansible.builtin.include_role:
