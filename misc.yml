@@ -1,0 +1,14 @@
+---
+- name: Deploy postfix
+  hosts: logger_host
+  become: true
+  tasks:
+    - name: "Include rhel-system-roles.postfix"
+      ansible.builtin.include_role:
+        name: rhel-system-roles.postfix
+      vars:
+        postfix_conf:
+          relay_domains: $mydestination
+          relayhost: "{{ dns_name }}"
+        postfix_manage_firewall: true
+        # postfix_manage_selinux: true

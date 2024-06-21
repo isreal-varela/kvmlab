@@ -2,16 +2,21 @@ ui            = true
 cluster_addr  = "https://127.0.0.1:8201"
 api_addr      = "https://127.0.0.1:8200"
 disable_mlock = true
-storage "raft" {
-  path = "/opt/vault/raft/data"
-  node_id = "raft_node_id"
+storage "file" {
+  path = "/vault/file"
 }
+#storage "raft" {
+#  path = "/vault/raft/data"
+#  node_id = "raft_node_id"
+#}
 listener "tcp" {
-  address       = "{{ ansible_default_ipv4.address }}:8200"
-  tls_cert_file = "/etc/pki/tls/certs/{{ inventory_hostname }}.crt"
-  tls_key_file  = "/etc/pki/tls/private/{{ inventory_hostname }}.key"
+  address             = "0.0.0.0:8200"
+  #address             = "{{ ansible_default_ipv4.address }}:8200"
+  tls_cert_file       = "/vault/tls/vault-cert.pem"
+  tls_key_file        = "/vault/tls/vault-key.pem"
+  tls_client_ca_file  = "/vault/tls/vault-ca.pem"
 }
-telemetry {
-  statsite_address = "127.0.0.1:8125"
-  disable_hostname = true
-}
+#telemetry {
+#  statsite_address = "127.0.0.1:8125"
+#  disable_hostname = true
+#}

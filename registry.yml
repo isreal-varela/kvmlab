@@ -53,7 +53,7 @@
         cd /srv/quay_install &&
         ./mirror-registry install --quayHostname "{{ inventory_hostname }}.{{ dns_name }}" \
                                   --quayRoot /opt/quay \
-                                  --initUser admin \
+                                  --initUser {{ quay_admin_user }} \
                                   --initPassword {{ quay_admin_password }} \
                                   --sslCert "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
                                   --sslKey "/etc/pki/tls/private/{{ inventory_hostname }}.key" \

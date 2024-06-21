@@ -26,11 +26,11 @@ Upon launching "./setup.sh", user will be prompted for multiple passwords includ
 The following items have been configured for deployment to the KVM instances based on the specified "role":
 
 - [x] FreeIPA (role: ipa_host / ipa_client) - Identity Management System providing Identity, Policy, and Audit (IPA) capabilities.
-- [x] Quay Mirror Registr (role: registry_host)
-- [ ] Foreman with Katello (role: foreman_host)
-- [ ] Tang (role: nbde_servers) and Clevis (role: nbde_clients) - Disk encryption via LUKS with centralized key repository - TBD
-- [ ] Vault (role: vault_host) - HashiCorp - TBD
-- [ ] E-mail Relay
+- [x] Quay Mirror Registry (role: registry_host)
+- [x] Foreman with Katello (role: foreman_host)
+- [*] Tang (role: nbde_servers) and Clevis (role: nbde_clients) - Disk encryption via LUKS with centralized key repository - TBD
+- [*] Vault (role: vault_host) - HashiCorp (role: vault_host)
+- [*] E-mail Relay
 - [ ] ClamAV
 - [ ] Backup Server
 - [ ] CI/CD Tooling
