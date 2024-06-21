@@ -1,0 +1,51 @@
+[Unit]
+Description=Vault Container
+Documentation=https://www.vaultproject.io/docs/
+Wants=network.target
+After=network-online.target
+#Before=
+#ConditionFileNotEmpty=/opt/vault/config/config.hcl
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+[Service]
+WorkingDirectory=/opt/vault
+#User=vault
+#Group=vault
+#Capabilities=CAP_IPC_LOCK+ep
+#CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
+LimitMEMLOCK=infinity
+Type=forking
+RemainAfterExit=yes
+TimeoutStartSec=5m
+#ExecStartPre=-/bin/rm -f %V/%n-pid %V/%n-cid
+ExecStart=/usr/bin/podman run \
+    -d \
+    --log-level debug \
+    --cap-add=IPC_LOCK \
+    -v "/opt/vault:/vault:Z" \
+    --userns=keep-id \
+    -e 'SKIP_CHOWN=true' \
+    -e 'SKIP_SETCAP=true' \
+    -p 8200:8200/tcp \
+    vault vault server --config=/vault/config/
+
+#    --cgroups=no-conmon \
+#    --conmon-pidfile %V/%n-pid \
+#    --cidfile %V/%n-cid \
+#    --name vault \
+#    --replace \
+#       {{ quay_url_fqdn }}/hashicorp/vault:latest
+
+#ExecStop=/usr/bin/podman stop --ignore --cidfile %V/%n-cid -t 10
+ExecStop=/usr/bin/podman stop --all -t 10
+#ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %V/%n-cid
+ExecStopPost=/usr/bin/podman rm --all
+#PIDFile=%V/%n-pid
+KillMode=none
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+#WantedBy=multi-user.target default.target

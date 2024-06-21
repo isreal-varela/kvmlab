@@ -222,7 +222,7 @@
       products:
         - 'Rocky9 Product'
         - 'Foreman Product'
-        # - 'EPEL Product'
+        - 'EPEL Product'
       username: "{{ frmn_usr }}"
       password: "{{ frmn_pwd }}"
       server_url: "{{ frmn_url }}"

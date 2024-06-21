@@ -21,45 +21,104 @@
         name: rhel-system-roles.firewall
       vars:
         firewall:
-          - {zone: public,
-             service: [http, https],
-             port: [ '8200/tcp', '8201/tcp', '9090/tcp' ],
-             state: enabled}
-    - name: Create target folder for software upload
-      ansible.builtin.file:
-        path: /srv/vault_install
-        state: directory
-        owner: ansible
-        mode: '0755'
-    ## Start - Temporary tasks because extracted files are supposed to go /usr/local/bin (per existing playbook)
-    ##  
+          - {zone: public, port: [ '8200/tcp', '8201/tcp' ], state: enabled}
+    - name: Install podman
+      ansible.builtin.package:
+        name: podman
+        state: present
+    - name: Create/update vault user
+      ansible.builtin.user:
+        name: vault
+        comment: 'Hashicorp Vault - Created via ansible'
+        uid: 1010
+        shell: /bin/bash
+        state: present
     - name: Create target vault configuration files
       ansible.builtin.file:
-        path: /opt/vault
+        path: "{{ item }}"
         state: directory
-        owner: ansible
+        # owner: vault
+        # group: vault
         mode: '0755'
-    - name: Create folder for Raft data storage
-      ansible.builtin.file:
-        path: /opt/vault/raft/data
-        state: directory
-        owner: ansible
-        mode: '0755'
-    - name: Stage 'vault' archive on target for later execution
-      become: false
-      ansible.builtin.unarchive:
-        src: /srv/software/vault_1.16.3+ent.fips1402_linux_amd64.zip
-        dest: /opt/vault
-    - name: Stage 'vault' configuration file
-      become: false
-      template:
+      with_items:
+        - /opt/vault
+        - /opt/vault/logs
+        - /opt/vault/file
+        - /opt/vault/config
+        - /opt/vault/tls
+        # - /opt/vault/raft
+        # - /opt/vault/raft/data
+    - name: Copy CA cert file to vault/tls folder
+      ansible.builtin.copy:
+        src: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+        dest: /opt/vault/tls/vault-ca.pem
+        # owner: vault
+        # group: vault
+        mode: '0644'
+        remote_src: yes
+    - name: Copy server cert to vault/tls folder
+      ansible.builtin.copy:
+        src: /etc/pki/tls/certs/{{ inventory_hostname }}.crt
+        dest: /opt/vault/tls/vault-cert.pem
+        # owner: vault
+        # group: vault
+        mode: '0644'
+        remote_src: yes
+    - name: Copy server private key to vault/tls folder
+      ansible.builtin.copy:
+        src: /etc/pki/tls/private/{{ inventory_hostname }}.key
+        dest: /opt/vault/tls/vault-key.pem
+        # owner: vault
+        # group: vault
+        mode: '0640'
+        remote_src: yes
+    - name: Copy vault configuration file
+      ansible.builtin.template: 
         src: vault.hcl.j2
-        dest: /opt/vault/vault.hcl
-        owner: ansible
-        group: ansible
-    - name: Set vault binary capabilities
-      capabilities:
-        path: /opt/vault/vault
-        capability: cap_ipc_lock+ep
-        state: present
-    ## End - Temporary tasks because extracted files are supposed to go /usr/local/bin (per existing playbook)
+        dest: /opt/vault/config/config.hcl
+        # owner: vault
+        # group: vault
+        mode: 0640
+
+- name: Prepare podman image/container for execution 
+  hosts: vault_host
+  # become_user: vault
+  become: true
+  tasks:
+    - name: Login to APE container registry
+      containers.podman.podman_login:
+        username: '{{ quay_admin_user }}'
+        password: '{{ quay_admin_password }}'
+        registry: mirror-reg.ape.test:8443
+        tlsverify: true
+    - name: Pull Hashicorp Vault container from APE container registry
+      containers.podman.podman_image:
+        name: mirror-reg.ape.test:8443/hashicorp/vault
+        tag: latest
+        # username: '{{ quay_admin_user }}'
+        # password: '{{ quay_admin_password }}'
+        validate_certs: true
+
+- name: Configure systemd service for Hashicorp Vault container
+  hosts: vault_host
+  become: true
+  tasks:
+    - name: Force systemd to re-read configs
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+    - name: Stage systemd service file for container
+      ansible.builtin.template:
+        src: vault-pod.service.j2
+        dest: /etc/systemd/system/vault-pod.service
+        mode: 0644
+      register: svc_cfg_file
+    - name: Set state of vault container service
+      ansible.builtin.systemd_service:
+        name: vault-pod
+        state: started
+        enabled: true
+      register: svc_cfg_stat
+    - name: If svc changed, force systemd to restart
+      ansible.builtin.systemd_service:
+        daemon_reexec: true
+      when: svc_cfg_file is changed or svc_cfg_stat is changed
