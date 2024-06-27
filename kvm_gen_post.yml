@@ -10,7 +10,7 @@
     #  When using the "generate-command", it would be used for any previously
     #    un-registered host
     - name: "Generate host-registration command"
-      shell: |
+      ansible.builtin.shell:
         hammer -c "{{ frmn_hmr_cfg_file }}" host-registration generate-command --activation-keys "{{ frmn_act_key }}"
       register: frmn_reg_cmd
     - name: "Save host-registration command"
@@ -95,7 +95,7 @@
     #  Force update to hostgroup for all hosts that should now exist based
     #    on "registration" above
     - name: "Ensure hostgroup membership"
-      shell: |
+      ansible.builtin.shell:
         hammer -c "{{ frmn_hmr_cfg_file }}" host update --name "{{ item }}.{{ dns_name }}" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroup "{{ frmn_hostgroup_name }}"
       register: hammer_out
       failed_when: 

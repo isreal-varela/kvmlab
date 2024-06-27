@@ -33,6 +33,9 @@
         uid: 1010
         shell: /bin/bash
         state: present
+    - name: Update 'linger' for vault user
+      ansible.builtin.shell:
+        loginctl enable-linger 1010
     - name: Create target vault configuration files
       ansible.builtin.file:
         path: "{{ item }}"
@@ -79,30 +82,27 @@
         # owner: vault
         # group: vault
         mode: 0640
-
-- name: Prepare podman image/container for execution 
-  hosts: vault_host
-  # become_user: vault
-  become: true
-  tasks:
-    - name: Login to APE container registry
-      containers.podman.podman_login:
-        username: '{{ quay_admin_user }}'
-        password: '{{ quay_admin_password }}'
-        registry: mirror-reg.ape.test:8443
-        tlsverify: true
-    - name: Pull Hashicorp Vault container from APE container registry
-      containers.podman.podman_image:
-        name: mirror-reg.ape.test:8443/hashicorp/vault
-        tag: latest
-        # username: '{{ quay_admin_user }}'
-        # password: '{{ quay_admin_password }}'
-        validate_certs: true
+    - name: Create target folder for software upload
+      ansible.builtin.file:
+        path: /srv/vault_install
+        state: directory
+        owner: vault
+        mode: '0755'
+    - name: Stage 'hc_vault' archive on target for later use
+      ansible.builtin.copy:
+        src: /srv/software/hc_vault.tar
+        dest: /srv/vault_install
+        owner: vault
+        group: vault
+        mode: '0644'
 
 - name: Configure systemd service for Hashicorp Vault container
   hosts: vault_host
   become: true
   tasks:
+    - name: Load 'vault' container from source file locally
+      containers.podman.podman_load:
+        input: /srv/vault_install/hc_vault.tar
     - name: Force systemd to re-read configs
       ansible.builtin.systemd_service:
         daemon_reload: true
