@@ -70,7 +70,7 @@
       failed_when: 
         - ( reg_out.rc != 0 )
         - ( reg_out.rc != 1 )
-        - '"This system is already reigstered" not in reg_out.stdout'
+        - '"This system is already registered" not in reg_out.stdout'
       # when: ( frmn_reg_cmd is defined )
 
     - name: "Disable list of internet-accessed repositories"
