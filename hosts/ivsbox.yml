@@ -1,0 +1,53 @@
+# file: hosts/ivsbox.yml
+
+tang_host:
+
+ipa_host:
+  hosts:
+    dbcombo
+
+ipa_client:
+
+logger_client:
+
+nbde_servers:
+
+nbde_clients:
+
+kvms:
+  vars:
+    ansible_connection: ssh
+
+containers:
+  vars:
+    ansible_connection=podman
+    ansible_python_interpreter=auto_silent
+  children:
+
+all:
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    dns_name: 'ape.sbox'
+    dns_search: 'ape.sbox'
+    env_classification: 'Unclassified'
+    env_label: '{{ dns_name | upper }} - {{ env_classification }} - RogueThink Lab (Downstream)'
+    env_colorbar: '#fcff33'
+    frmn_host: "george-jr.{{ dns_name }}"
+    frmn_url: "https://{{ frmn_host }}"
+    frmn_local_dnf_repo: "ape-platform-local-repo"
+    frmn_install_stg_rpms: "/home/ansible/stg-repo"
+    frmn_import_stg_source: "/srv/content_view/APE_Content_View/"
+    frmn_import_stg_target: "/opt/pulp/imports/"
+    frmn_import_stg_version_num: "1.0"
+    frmn_import_stg_tsfolder: "2024-07-11T14-48-26-00-00"
+    frmn_import_stg_metadata_filename: "metadata-1.json"
+    inet_access: false
+    skip_frmn_export: true
+    skip_frmn_fetch: true
+    skip_frmn_stage: false
+    skip_frmn_import: false
+    kvm_list:
+      - {name: "dbcombo",    ip_addr: "192.168.100.39", enabled: true,  roles: ["ipa_host"                   ], cpus: 2, ram_mb: 2048, iso: "ipa-server"}
+      - {name: "george-jr",  ip_addr: "192.168.100.37", enabled: true,  roles: ["foreman_host", "ipa_client" ], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
+

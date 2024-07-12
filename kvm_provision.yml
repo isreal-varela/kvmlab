@@ -7,7 +7,7 @@
     vcpus: 2
     ram_mb: 2048
     net: br0
-    dns_name: ape.test
+    # dns_name: ape.test
 
   tasks:
 
@@ -34,6 +34,7 @@
         vm_ram_mb: "{{ item.ram_mb | default(ram_mb) }}"
         vm_root_disk: "{{ item.rt_disk | default(vm_disk) }}"
         vm_net: "{{ item.net | default(net) }}"
+        vm_iso: "{{ item.iso | default() }}"
         cleanup_tmp: "{{ cleanup }}"
         vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_roles: "{{ item.roles | default([]) }}"
@@ -66,14 +67,6 @@
   ansible.builtin.import_playbook: foreman.yml
   tags:
     - foreman_cfg
-
-      #- name: Hydrate foreman
-      #  debug:
-      #    msg: "Need to Hydrate foreman with packages, etc."
-
-      #- name: Reconfigure KVMs
-      #  debug:
-      #    msg: "Disable internet-accessible repos and point to Foreman"
 
 - name: Include a play for Mirror-Registry
   ansible.builtin.import_playbook: registry.yml

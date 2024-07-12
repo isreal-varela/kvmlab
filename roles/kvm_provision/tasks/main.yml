@@ -56,6 +56,7 @@
           - "                vm_net: '{{ vm_net }}'"
           - "            vm_ip_addr: {{ vm_ip_addr }}"
           - "              vm_roles: '{{ vm_roles }}'"
+          - "                vm_iso: '{{ vm_iso }}'"
         verbosity: 0
       tags:
         - kvm_pre_cfg
@@ -108,6 +109,12 @@
         genisoimage -output {{ libvirt_pool_dir }}/{{ vm_name }}/firstboot.iso -V cidata -r -J {{ cloud_init_user_data }} {{ cloud_init_meta_data }} {{ cloud_init_network_config }}
       tags:
         - kvm_prov
+
+    - name: Write KVM-specific XML file for troubleshooting
+      become: true
+      ansible.builtin.template:
+        src: 'vm-template.xml.j2'
+        dest: '/tmp/kvm_{{ vm_name }}.xml'
 
     - name: Define vm
       become: true

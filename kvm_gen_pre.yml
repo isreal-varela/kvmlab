@@ -27,6 +27,16 @@
         mode: '0644'
         backup: true
 
+    - name: "Disable list of internet-accessed repositories"
+      become: true
+      community.general.dnf_config_manager:
+        name:
+          - appstream
+          - baseos
+          - extras
+        state: disabled
+      when: not inet_access
+
     ## ----------------------------------------------------------- ##
     ## Added the following to address from OpenSCAP reported items
     ## ----------------------------------------------------------- ##

@@ -3,8 +3,25 @@
   gather_facts: false
 
   tasks:
-    - name: "Include task list for Foreman Host/Master config"
-      include_tasks: foreman_host_config.yml
+
+    - name: "Include shared Foreman environment-specific variables"
+      ansible.builtin.include_vars: frmn.yml
+
+    - name: "Include task list for Hammer CLI config"
+      include_tasks: foreman_cli_config.yml
+
+    - name: "Include task list for Foreman Master/Upstream config"
+      include_tasks: foreman_host_upstream_config.yml
+      when: inet_access
+
+    - name: "Include task list for Foreman Host/Downstream config"
+      vars:
+        # BeetleD: 2024-07-10
+        # As discussed with IV, all 'downstream' Foreman instances
+        #  will not use a named "Lifecycle Environment"
+        frmn_lce: "Library"
+      include_tasks: foreman_host_downstream_config.yml
+      when: not inet_access
 
     # ---------------------------------------------------------------------------
     #  When using the "generate-command", it would be used for any previously
@@ -13,6 +30,7 @@
       ansible.builtin.shell:
         hammer -c "{{ frmn_hmr_cfg_file }}" host-registration generate-command --activation-keys "{{ frmn_act_key }}"
       register: frmn_reg_cmd
+
     - name: "Save host-registration command"
       set_fact:
         reg_cmd: "{{ frmn_reg_cmd.stdout }}" 
@@ -30,7 +48,7 @@
   #   # frmn_loc: "{{ dns_name | upper }} Location"
   #   frmn_lce: "{{ frmn_gen_name }}_LCE"
   #   frmn_hostgroup_name: "{{ frmn_gen_name }} Hostgroup"
-  #  frmn_act_key: "{{ frmn_gen_name }} Activation Key"
+  #   frmn_act_key: "{{ frmn_gen_name }} Activation Key"
   #   frmn_host: "foreman.{{ dns_name }}"
   #   frmn_url: "https://{{ frmn_host }}"
   #   frmn_usr: "admin"
@@ -43,25 +61,6 @@
     - name: "Include shared Foreman environment-specific variables"
       ansible.builtin.include_vars: frmn.yml
 
-    # - name: "Placeholder for KVM-specific tasks"
-    #   debug:
-    #     var: frmn_gen_name
-
-    # ---------------------------------------------------------------------------
-    ##### Appears that "registration_command" module is part of v4.1.0-dev of Foreman Ansible stuff
-    #####   and not available to us with 3.11
-    # - name: "Generate registration command"
-    #   theforeman.foreman.registration_command:
-    #     username: "{{ frmn_usr }}"
-    #     password: "{{ frmn_pwd }}"
-    #     server_url: "{{ frmn_url }}"
-    #     validate_certs: "{{ frmn_validate_cert }}"
-    #   register: command
-
-    # - name: "Check 'command' value"
-    #   debug:
-    #     var: command
-
     - name: "Perform registration"
       become: true
       ansible.builtin.shell:
@@ -71,20 +70,6 @@
         - ( reg_out.rc != 0 )
         - ( reg_out.rc != 1 )
         - '"This system is already registered" not in reg_out.stdout'
-      # when: ( frmn_reg_cmd is defined )
-
-    - name: "Disable list of internet-accessed repositories"
-      become: true
-      community.general.dnf_config_manager:
-        name:
-          - appstream
-          - baseos
-          - extras
-        state: disabled
-
-    ## ----------------------------------------------------------- ##
-    ## 
-    ## ----------------------------------------------------------- ##
 
 - hosts: foreman_host
   gather_facts: false

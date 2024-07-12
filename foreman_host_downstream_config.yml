@@ -1,0 +1,148 @@
+---
+
+  # ---------------------------------------------------------------------------
+  #  Add/Update Foreman configurations
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Create or update domain"
+    theforeman.foreman.domain:
+      name: "{{ dns_name }}"
+      organizations:
+        - "{{ frmn_org }}"
+      locations:
+        - "{{ frmn_loc }}"
+      username: "{{ frmn_usr }}"
+      server_url: "{{ frmn_url }}"
+      password: "{{ frmn_pwd }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  # ---------------------------------------------------------------------------
+  - name: "Create or update lifecycle env"
+    theforeman.foreman.lifecycle_environment:
+      name: "{{ frmn_lce }}"
+      label: "{{ frmn_lce | lower }}"
+      organization: "{{ frmn_org }}"
+      description: "Created via Ansible playbook"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    when: frmn_lce != 'Library'
+
+  # ---------------------------------------------------------------------------
+  #  Misc. settings
+  - name: "Change Settings"
+    shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name instance_title --value "{{ env_label }}"
+      hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name instance_color --value "{{ env_colorbar }}"
+      hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name remote_execution_ssh_user --value "ansible"
+      hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name ansible_ssh_private_key_file --value "/usr/share/foreman-proxy/.ssh/id_rsa_foreman_proxy"
+      hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name pulpcore_export_destination --value "/opt/pulp/exports"
+    # failed_when: false
+
+  - name: "Prepare to import into 'downstream' Foreman instance"
+    become: true
+    block:
+
+    - name: "Upload/stage exported foreman content for import"
+      ansible.builtin.copy:
+        src: "{{ frmn_import_stg_source }}"
+        dest: "{{ frmn_import_stg_target }}"
+        owner: pulp
+        group: pulp
+        mode: 0775
+      when: not skip_frmn_stage
+
+    - name: "Execute import of staged foreman content view"
+      shell: |
+        hammer -c "{{ frmn_hmr_cfg_file }}" content-import version \
+               --organization='Default Organization' \
+               --path={{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/ \
+               --metadata-file={{ frmn_import_stg_target }}/{{ frmn_import_stg_metadata_filename}}
+      when: not skip_frmn_import
+
+  # End of "become" block
+  # ---------------------------------------------------------------------------
+
+  # ---------------------------------------------------------------------------
+  # Post content import activities
+
+  - name: "Create or update client activation key"
+    theforeman.foreman.activation_key:
+      name: "{{ frmn_act_key }}"
+      organization: "{{ frmn_org }}"
+      lifecycle_environment: "{{ frmn_lce }}"
+      content_view: "APE Content View"
+      content_overrides:
+        - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_BaseOS_Repo",                    override: enabled }
+        - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_AppStream_Repo",                 override: enabled }
+        - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_extras_Repo",                    override: enabled }
+        - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_client_latest_Repo",        override: enabled }
+        - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_katello_4_13_katello_Repo", override: enabled }
+        - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_releases_latest_Repo",      override: enabled }
+        - { label: "Default_Organization_EPEL_Product_EPEL9_Repo",                                 override: enabled }
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Create or update APE hostgroup"
+    theforeman.foreman.hostgroup:
+      name: "{{ frmn_hostgroup_name }}"
+      organization: "{{ frmn_org }}"
+      locations: "{{ frmn_loc }}"
+      domain: "{{ dns_name }}"
+      architecture: "x86_64"
+      operatingsystem: "Rocky Linux 9.4"
+      lifecycle_environment: "{{ frmn_lce }}"
+      content_view: "APE Content View"
+      openscap_proxy: "{{ frmn_host }}"
+      activation_keys: "{{ frmn_act_key }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+
+  - name: "Bulk upload OpenSCAP content"
+    shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" scap-content bulk-upload --type 'directory' --directory /usr/share/xml/scap/ssg/content --organization "{{ frmn_org }}" --location "{{ frmn_loc }}"
+    register: hammer_out
+    failed_when:
+      - ( hammer_out.rc != 0 )
+      - ( hammer_out.rc != 65 )
+
+  - name: "Query for policy"
+    shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" --output json policy info --name '{{ frmn_gen_name }} Policy' | jq '.Id'
+    register: hammer_qry
+    failed_when: false
+  - name: "Set frmn_policy_exists fact"
+    set_fact:
+      frmn_policy_exists: "{% if ( hammer_qry.rc != 0 ) or ( hammer_qry.stdout == '' ) %}false{% else %}true{% endif %}"
+
+  - name: "Create policy"
+    shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" policy create --name "{{ frmn_gen_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
+    when: ( frmn_policy_exists == false )
+    register: hammer_out
+    failed_when:
+      - ( hammer_out.rc != 0 )
+      - ( hammer_out.rc != 65 )
+      - '"Name has already been taken" not in hammer_out.stdout'
+
+  - name: "Update policy"
+    shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" policy update --name "{{ frmn_gen_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
+    when: ( frmn_policy_exists == true )
+    register: hammer_out
+    failed_when:
+      - ( hammer_out.rc != 0 )
+      - ( hammer_out.rc != 65 )
+      - '"Name has already been taken" not in hammer_out.stdout'
+
+    # ---------------------------------------------------------------------------
