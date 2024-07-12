@@ -1,0 +1,28 @@
+---
+
+  # ---------------------------------------------------------------------------
+  #  Setup Hammer CLI-related configuration files
+
+  - name: "Create local user foreman folder"
+    ansible.builtin.file:
+      path: "{{ frmn_hmr_cfg_dir }}"
+      recurse: true
+      owner: 'ansible'
+      group: 'ansible'
+      mode: '0777'
+
+  - name: "Create local user foreman/log folder"
+    ansible.builtin.file:
+      path: "{{ frmn_hmr_log_dir }}"
+      recurse: true
+      owner: 'ansible'
+      group: 'ansible'
+      mode: '0777'
+
+  - name: "Create cli_config.cfg"
+    template:
+      src: hmr_cli.cfg.j2
+      dest: "{{ frmn_hmr_cfg_file }}"
+      owner: 'ansible'
+      group: 'ansible'
+      mode: '0777'

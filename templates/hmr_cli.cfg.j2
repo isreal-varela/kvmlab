@@ -1,0 +1,90 @@
+:modules:
+  - hammer_cli_foreman
+
+:foreman:
+  :host: 'https://{{ frmn_host }}/'
+  :username: '{{ vault_foreman_admin_usr  }}'
+  :password: '{{ vault_foreman_admin_pwd  }}'
+
+#:log_dir: '{{ frmn_hmr_log_dir }}'
+:log_level: '{{ frmn_hmr_log_lvl }}'
+
+# User interface related settings
+:ui:
+  # Enable interactive queries?
+  :interactive: true
+  # Number of records listed per page
+  # :per_page: 20
+  # Location of shell history file
+  :history_file: '~/.hammer/history'
+  # Mark translated strings with X characters (for developers)
+  # :mark_translated: false
+  # Hide headers from output of list actions
+  # :no_headers: true
+  # Choose capitalization for JSON/YAML output.
+  # One of: 'downcase', 'capitalize', 'upcase'
+  # :capitalization: 'downcase'
+
+# Enable/disable color output of logger in Clamp commands
+:watch_plain: false
+
+# Force reload of Apipie cache with every Hammer invocation
+:reload_cache: false
+
+# Directory where the logs are stored. The default is /var/log/hammer/ and the log file is named hammer.log
+:log_dir: '~/.hammer/log'
+
+# Logging level. One of debug, info, warning, error, fatal
+#:log_level: 'error'
+
+# Verbosity of the commands. Possible values:
+#   0 - completely silent, errors to stderr. Equals to --quiet.
+#   1 - data, interactive I/O. Equals to --no-verbose.
+#   2 - data, messages, interactive I/O, progress bars. Equals to --verbose.
+:verbosity: 2
+
+# Enable/disable defaults. Preset default values for the options won't be used.
+#:use_defaults: true
+
+#:log_owner: 'foreman'
+#:log_group: 'foreman'
+
+# Maximum log size in bytes. Log rotates when the value gets exceeded
+#:log_size: 5 #in MB
+
+# Log record pattern (logging gem syntax)
+#:log_pattern: '[%5l %d %c] %m'
+
+# Location of cache for bash completion
+:completion_cache_file: '~/.cache/hammer_completion.json'
+
+# SSL auth options
+#:ssl:
+  # Path to a CA file in PEM format, mutually exclusive with :ssl_ca_path:
+  #:ssl_ca_file: '/path/to/ca_certificate.pem'
+
+  # Path to a direcotry with CA files, mutually exclusive with :ssl_ca_file:
+  # The directory should contain one certificate per file in PEM format, with a file name of the form hash.N
+  # The hash can be obtained via the -hash option of the openssl x509 command. See the OpenSSL documentation
+  # for more information.
+  #:ssl_ca_path: '/path/to/ca'
+
+  # Turn SSL verification on/off
+  #:verify_ssl: true
+
+  # Path to a client certificate, DER- or PEM-encoded certificates are supported
+  #:ssl_client_cert: '/path/to/cert.crt'
+
+  # Path to a client key
+  #:ssl_client_key: '/path/to/cert.key'
+
+  # Enable standard authentication in addition to client certificate authentication.
+  # Switch to false if you want to rely on certificates only.
+  #:ssl_with_basic_auth: true
+
+  # Local CA cert store path where hammer stores certificates fetched from the server.
+  # Certs from the local storage are used only when neither :ssl_ca_file: nor :ssl_ca_path: is cofigured.
+  #:local_ca_store_path: '~/.hammer/certs'
+
+  # Allows setting the SSL version to use when making API calls
+  #:ssl_version: 'TLSv1_2'

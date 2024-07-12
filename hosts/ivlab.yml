@@ -29,13 +29,28 @@ all:
     ansible_python_interpreter: /usr/bin/python3
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
     dns_name: 'ape.test'
-    env_label: 'Unclassified'
+    dns_search: 'ape.test'
+    env_classification: 'Unclassified'
+    env_label: '{{ dns_name | upper }} - {{ env_classification }} - RogueThink Lab (Master/Upstream)'
     env_colorbar: '#067040'
+    frmn_host: "foreman.{{ dns_name }}"
+    frmn_url: "https://{{ frmn_host }}"
+    frmn_local_dnf_repo: "ape-platform-local-repo"
+    frmn_install_stg_rpms: "/home/ansible/stg-repo"
+    frmn_import_stg_source: "/srv/content_view/APE_Content_View/"
+    frmn_import_stg_target: "/opt/pulp/imports/"
+    frmn_import_stg_version_num: "1.0"
+    frmn_import_stg_tsfolder: "2024-07-11T14-48-26-00-00"
+    frmn_import_stg_metadata_filename: "metadata-1.json"
+    skip_frmn_export: true
+    skip_frmn_fetch: true
+    skip_frmn_stage: false
+    skip_frmn_import: false
+    inet_access: true
     kvm_list:
-      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients", "logger_client"], cpus: 2, ram_mb: 4096}
-      - {name: "tang",       ip_addr: "192.168.100.41", enabled: true,  roles: ["tang_host",     "nbde_servers", "ipa_client", "logger_client"], ram_mb: 3072}
-      - {name: "vault",      ip_addr: "192.168.100.42", enabled: true,  roles: ["vault_host",    "nbde_clients", "ipa_client", "logger_client"]}
-      - {name: "logger",     ip_addr: "192.168.100.43", enabled: true,  roles: ["logger_host",   "nbde_clients", "ipa_client"]}
-      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients", "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480}
-      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients", "ipa_client", "logger_client"], rt_disk: '120G'}
-
+      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "logger_client"], cpus: 2, ram_mb: 4096}
+      - {name: "tang",       ip_addr: "192.168.100.41", enabled: false, roles: ["tang_host",     "ipa_client", "logger_client"], ram_mb: 3072}
+      - {name: "vault",      ip_addr: "192.168.100.42", enabled: true,  roles: ["vault_host",    "ipa_client", "logger_client"]}
+      - {name: "logger",     ip_addr: "192.168.100.43", enabled: true,  roles: ["logger_host",   "ipa_client"]}
+      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G'}
+      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "ipa_client", "logger_client"], rt_disk: '180G'}
