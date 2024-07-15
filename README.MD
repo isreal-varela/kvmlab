@@ -9,12 +9,13 @@ The following "roles" have been defined within the playbook configuration for us
 - cpus (optional) = number of vCPUs allocated to host during initial provisioning.  Used to override "default" value (vm_vcpus).
 - ram_mb (optional) = amount of RAM/memory (in MB) to allocate to host during initial provisioning.  Used to override "default" value (vm_ram_mb).
 - rt_disk (optional) = amount of disk space to allocate to host for "root" device during initial provisioning.  Used to override "default" value (vm_disk).
+- iso (optional) = name of file to be available to mount within KVM (only portion of filename before ".iso" is provided, and file MUST exist in /srv/iso folder)
 
 An example of items follows:
 
   kvm_list:
     - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients", "logger_client"], cpus: 2, ram_mb: 4096}
-    - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients", "ipa_client", "logger_client"]}
+    - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients", "ipa_client", "logger_client"], iso: "foreman"}
     - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients", "ipa_client", "logger_client"], rt_disk: '80G'}
 
 Upon launching "./setup.sh", user will be prompted for multiple passwords including:
@@ -28,9 +29,9 @@ The following items have been configured for deployment to the KVM instances bas
 - [x] FreeIPA (role: ipa_host / ipa_client) - Identity Management System providing Identity, Policy, and Audit (IPA) capabilities.
 - [x] Quay Mirror Registry (role: registry_host)
 - [x] Foreman with Katello (role: foreman_host)
-- [*] Tang (role: nbde_servers) and Clevis (role: nbde_clients) - Disk encryption via LUKS with centralized key repository - TBD
-- [*] Vault (role: vault_host) - HashiCorp (role: vault_host)
-- [*] E-mail Relay
+- [ ] ~~Tang (role: nbde_servers) and Clevis (role: nbde_clients) - Disk encryption via LUKS with centralized key repository - TBD~~
+- [ ] ~~Vault (role: vault_host) - HashiCorp (role: vault_host)~~
+- [x] E-mail Relay
 - [ ] ClamAV
 - [ ] Backup Server
 - [ ] CI/CD Tooling
