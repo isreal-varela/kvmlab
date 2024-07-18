@@ -14,6 +14,10 @@ nbde_servers:
 
 nbde_clients:
 
+foreman_host:
+  hosts:
+    george-jr
+
 kvms:
   vars:
     ansible_connection: ssh
@@ -43,6 +47,8 @@ all:
     frmn_import_stg_tsfolder: "2024-07-11T14-48-26-00-00"
     frmn_import_stg_metadata_filename: "metadata-1.json"
     inet_access: false
+    skip_frmn_register: false
+    skip_frmn_repo_sync: false
     skip_frmn_export: true
     skip_frmn_fetch: true
     skip_frmn_stage: false

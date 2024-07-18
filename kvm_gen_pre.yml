@@ -19,7 +19,7 @@
 
     - name: "Upload master hosts file to each KVM"
       become: true
-      copy:
+      ansible.builtin.copy:
         src: /etc/hosts
         dest: /etc/hosts
         owner: root

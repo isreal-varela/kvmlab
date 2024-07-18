@@ -35,7 +35,7 @@
   # ---------------------------------------------------------------------------
   #  Misc. settings
   - name: "Change Settings"
-    shell: |
+    ansible.builtin.shell: |
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name instance_title --value "{{ env_label }}"
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name instance_color --value "{{ env_colorbar }}"
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name remote_execution_ssh_user --value "ansible"
@@ -57,7 +57,7 @@
       when: not skip_frmn_stage
 
     - name: "Execute import of staged foreman content view"
-      shell: |
+      ansible.builtin.shell: |
         hammer -c "{{ frmn_hmr_cfg_file }}" content-import version \
                --organization='Default Organization' \
                --path={{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/ \
@@ -109,7 +109,7 @@
       state: present
 
   - name: "Bulk upload OpenSCAP content"
-    shell: |
+    ansible.builtin.shell: |
       hammer -c "{{ frmn_hmr_cfg_file }}" scap-content bulk-upload --type 'directory' --directory /usr/share/xml/scap/ssg/content --organization "{{ frmn_org }}" --location "{{ frmn_loc }}"
     register: hammer_out
     failed_when:
@@ -117,7 +117,7 @@
       - ( hammer_out.rc != 65 )
 
   - name: "Query for policy"
-    shell: |
+    ansible.builtin.shell: |
       hammer -c "{{ frmn_hmr_cfg_file }}" --output json policy info --name '{{ frmn_gen_name }} Policy' | jq '.Id'
     register: hammer_qry
     failed_when: false
@@ -126,7 +126,7 @@
       frmn_policy_exists: "{% if ( hammer_qry.rc != 0 ) or ( hammer_qry.stdout == '' ) %}false{% else %}true{% endif %}"
 
   - name: "Create policy"
-    shell: |
+    ansible.builtin.shell: |
       hammer -c "{{ frmn_hmr_cfg_file }}" policy create --name "{{ frmn_gen_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
     when: ( frmn_policy_exists == false )
     register: hammer_out
@@ -136,7 +136,7 @@
       - '"Name has already been taken" not in hammer_out.stdout'
 
   - name: "Update policy"
-    shell: |
+    ansible.builtin.shell: |
       hammer -c "{{ frmn_hmr_cfg_file }}" policy update --name "{{ frmn_gen_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
     when: ( frmn_policy_exists == true )
     register: hammer_out

@@ -20,7 +20,7 @@
       mode: '0777'
 
   - name: "Create cli_config.cfg"
-    template:
+    ansible.builtin.template:
       src: hmr_cli.cfg.j2
       dest: "{{ frmn_hmr_cfg_file }}"
       owner: 'ansible'

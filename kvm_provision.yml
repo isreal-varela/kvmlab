@@ -11,8 +11,48 @@
 
   tasks:
 
+    ## BeetleD -- Test retrieving FQDN for a specific role -- START
+    # Check whether "foreman_host" is specified or can be determined
+    - name: Set default value for 'foreman_host_specified'
+      ansible.builtin.set_fact:
+        foreman_host_specified: false
+      tags: always
+    - name: Change value for 'foreman_host_specified' based on 'kvm_list' configuration
+      ansible.builtin.set_fact:
+        foreman_host_specified: true
+      when:
+        - not foreman_host_specified
+        - ( kvm_list | selectattr( 'roles', 'search', 'foreman_host' ) | length ) > 0
+      tags: always
+    - name: Change value for 'foreman_host_specified' based on inventory
+      ansible.builtin.set_fact:
+        foreman_host_specified: true
+      when:
+        - not foreman_host_specified
+        - ( groups['foreman_host']  | default({}) | length ) > 0
+      tags: always
+
+    # Check whether "ipa_host" is specified or can be determined
+    - name: Set default value for 'ipa_host_specified'
+      ansible.builtin.set_fact:
+        ipa_host_specified: false
+      tags: always
+    - name: Change value for 'ipa_host_specified' based on 'kvm_list' configuration
+      ansible.builtin.set_fact:
+        ipa_host_specified: true
+      when: ( kvm_list | selectattr( 'roles', 'search', 'ipa_host' ) | length ) > 0
+      tags: always
+    - name: Change value for 'ipa_host_specified' based on inventory
+      ansible.builtin.set_fact:
+        ipa_host_specified: true
+      when:
+        - not ipa_host_specified
+        - ( groups['ipa_host'] | default({}) | length ) > 0
+      tags: always
+    ## BeetleD -- Test retrieving FQDN for a specific role -- END
+
     - name: Add/update full KVM host /etc/hosts file entries
-      lineinfile:
+      ansible.builtin.lineinfile:
         dest: /etc/hosts
         regexp: '{{ item.name }}.{{ dns_name }}'
         line: '{{ item.ip_addr | default(ip_addr) }}   {{ item.name }}.{{ dns_name }} {{ item.name }}'
@@ -25,7 +65,7 @@
         - kvm_pre_cfg
 
     - name: KVM Provision role
-      include_role:
+      ansible.builtin.include_role:
         name: kvm_provision
       vars:
         vm_item_name: "{{ item.name }}"

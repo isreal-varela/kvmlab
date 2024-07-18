@@ -57,6 +57,7 @@
           - "            vm_ip_addr: {{ vm_ip_addr }}"
           - "              vm_roles: '{{ vm_roles }}'"
           - "                vm_iso: '{{ vm_iso }}'"
+          - "              dns_name: '{{ dns_name }}'"
         verbosity: 0
       tags:
         - kvm_pre_cfg

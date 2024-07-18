@@ -42,10 +42,12 @@ all:
     frmn_import_stg_version_num: "1.0"
     frmn_import_stg_tsfolder: "2024-07-11T14-48-26-00-00"
     frmn_import_stg_metadata_filename: "metadata-1.json"
-    skip_frmn_export: true
-    skip_frmn_fetch: true
-    skip_frmn_stage: false
-    skip_frmn_import: false
+    skip_frmn_register: false
+    skip_frmn_repo_sync: false
+    skip_frmn_export: false
+    skip_frmn_fetch: false
+    skip_frmn_stage: true
+    skip_frmn_import: true
     inet_access: true
     kvm_list:
       - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "logger_client"], cpus: 2, ram_mb: 4096}
