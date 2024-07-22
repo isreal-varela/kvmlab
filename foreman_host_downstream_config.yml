@@ -60,7 +60,7 @@
       ansible.builtin.shell: |
         hammer -c "{{ frmn_hmr_cfg_file }}" content-import version \
                --organization='Default Organization' \
-               --path={{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/ \
+               --path={{ frmn_import_stg_target }}/APE_Content_View/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/ \
                --metadata-file={{ frmn_import_stg_target }}/{{ frmn_import_stg_metadata_filename}}
       when: not skip_frmn_import
 

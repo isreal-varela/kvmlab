@@ -51,7 +51,7 @@
     changed_when: false
     register: ethernet_interface_name
 
-  - name:  Disable IPv6 in Network Manager for the main ethernet device
+  - name: Disable IPv6 in Network Manager for the main ethernet device
     community.general.nmcli:
       type: ethernet
       conn_name: "{{ item }}"
@@ -88,7 +88,7 @@
         enabled: false
       # failed_when: false
 
-    # Unmount ISO as should ONLY be req'd prior to and during ipa-server install (via role above) 
+    # Unmount ISO as should ONLY be req'd prior to and during ipa-server install (via role above)
     - name: Umount the ISO
       ansible.builtin.mount:
         path: /mnt

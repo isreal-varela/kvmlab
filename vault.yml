@@ -76,7 +76,7 @@
         mode: '0640'
         remote_src: yes
     - name: Copy vault configuration file
-      ansible.builtin.template: 
+      ansible.builtin.template:
         src: vault.hcl.j2
         dest: /opt/vault/config/config.hcl
         # owner: vault

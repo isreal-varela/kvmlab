@@ -9,7 +9,7 @@
         host: '{{ ansible_ssh_host|default(ansible_host)|default(inventory_hostname) }}'
         connect_timeout: 3
         search_regex: OpenSSH
-        sleep: 2 
+        sleep: 2
         delay: 6
         timeout: 300
         state: started
@@ -41,7 +41,7 @@
     ## Added the following to address from OpenSCAP reported items
     ## ----------------------------------------------------------- ##
     ## BeetleD (2024-06-11):
-    ##   Commented out the following after hearing from IV that it's 
+    ##   Commented out the following after hearing from IV that it's
     ##   that it's not relevant for the client.
     # - name: XCCDF Value login_banner_text # promote to variable
     #   set_fact:

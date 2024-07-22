@@ -40,7 +40,7 @@
         firewall:
           - {zone: public,
              service: [http, https],
-             port: [ '53/udp', '53/tcp', '67/udp', '69/udp', '5647/tcp', '8000/tcp', '8140/tcp', '9090/tcp' ],
+             port: ['53/udp', '53/tcp', '67/udp', '69/udp', '5647/tcp', '8000/tcp', '8140/tcp', '9090/tcp'],
              state: enabled}
 
     # ---------------------------------------------------------------------------

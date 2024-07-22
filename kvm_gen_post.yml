@@ -33,7 +33,7 @@
 
     - name: "Save host-registration command"
       set_fact:
-        reg_cmd: "{{ frmn_reg_cmd.stdout }}" 
+        reg_cmd: "{{ frmn_reg_cmd.stdout }}"
 
 # --------------------------------------------------------------------------------------------------
 

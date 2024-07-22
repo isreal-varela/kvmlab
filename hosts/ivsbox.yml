@@ -40,12 +40,13 @@ all:
     frmn_host: "george-jr.{{ dns_name }}"
     frmn_url: "https://{{ frmn_host }}"
     frmn_local_dnf_repo: "ape-platform-local-repo"
-    frmn_install_stg_rpms: "/home/ansible/stg-repo"
+    frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/APE_Content_View/"
+    frmn_export_stg_target: "/srv/content_view/APE_Content_View/"
     frmn_import_stg_source: "/srv/content_view/APE_Content_View/"
     frmn_import_stg_target: "/opt/pulp/imports/"
     frmn_import_stg_version_num: "1.0"
-    frmn_import_stg_tsfolder: "2024-07-11T14-48-26-00-00"
-    frmn_import_stg_metadata_filename: "metadata-1.json"
+    frmn_import_stg_tsfolder: "placeholder_folder_name"
+    frmn_import_stg_metadata_filename: "placeholder.json"
     inet_access: false
     skip_frmn_register: false
     skip_frmn_repo_sync: false

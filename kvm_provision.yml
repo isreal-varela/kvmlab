@@ -118,7 +118,7 @@
   tags:
     - vault_cfg
 
-- name: Include a play for Syslog Servers/Clients 
+- name: Include a play for Syslog Servers/Clients
   ansible.builtin.import_playbook: logging.yml
   tags:
     - logger_cfg

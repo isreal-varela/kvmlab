@@ -1,6 +1,15 @@
 ---
 
   # ---------------------------------------------------------------------------
+  #  Revise "ansible" user group membership to allow writing to "pulp" folders
+  - name: Add "ansible" user to "pulp" group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: pulp
+      append: yes
+    become: true
+
+  # ---------------------------------------------------------------------------
   #  Add/Update Foreman configurations
 
   # ---------------------------------------------------------------------------
@@ -333,14 +342,38 @@
                  --organization="Default Organization"
         register: hammer_out
       - name: "Debug hammer output"
-        debug:
+        ansible.builtin.debug:
           var: hammer_out.stdout
-
+    tags: frmn_upstream_export
     when: not skip_frmn_export
 
-  - name: "Fetch importable artifacts for later upload 'downstream'"
-    ansible.builtin.fetch:
-      src: "{{ frmn_export_stg_source }}"
-      dest: "{{ frmn_export_stg_target }}"
-      flat: true
+  - name: Ensure "fetch" task will have access to read exported files
+    become: true
+    ansible.builtin.file:
+      path: "/opt/pulp/exports"
+      recurse: true
+      mode: 0775
+    tags:
+      - frmn_upstream_export
+      - frmn_upstream_fetch
+
+  - name: Export/prepare importable artifacts for use "downstream"
+    block:
+
+    - name: "SCP to retrieve metadata file(s) for importable artifacts"
+      delegate_to: localhost
+      ansible.builtin.shell: "scp -r -i /srv/keys/vm_key ansible@{{ frmn_host }}:/home/ansible/metadata*.json {{ frmn_export_stg_target }}/"
+
+    - name: "Retrieve list of importable artifact file name"
+      ansible.builtin.find:
+        paths: "{{ frmn_export_stg_source }}"
+        recurse: true
+        patterns: "*.*"
+      register: frmn_files_to_copy
+
+    - name: "SCP to retrieve importable artifacts"
+      delegate_to: localhost
+      ansible.builtin.shell: "scp -r -i /srv/keys/vm_key ansible@{{ frmn_host }}:{{ frmn_export_stg_source}} {{ frmn_export_stg_target }}/"
+
+    tags: frmn_upstream_fetch
     when: not skip_frmn_fetch
