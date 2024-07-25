@@ -16,4 +16,17 @@
           - net-tools
         state: present
 
-
+    - name: Create various folder under /srv/
+      ansible.builtin.file:
+        path: /srv/{{ item }}
+        state: directory
+        owner: root
+        #group: libvirt
+        group: root
+        mode: '2777'
+      loop:
+        - content_view
+        - iso
+        - keys
+        - software
+        - vmdisks 
