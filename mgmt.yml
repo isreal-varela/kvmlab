@@ -6,14 +6,30 @@
   become: true
   tasks:
 
+    - name: Include EPEL repository
+      ansible.builtin.yum_repository:
+        name: epel
+        description: EPEL YUM repo
+        baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/
+        gpgcheck: no
+
     - name: Install required OS packages
       ansible.builtin.package:
         name:
           - ansible-core
           # - ansible-collection-redhat-rhel_mgmt
+          - bash-completion
           - bind-utils
+          - cockpit
+          - cockpit-machines
+          - cockpit-podman
           - git
+          - libvirt
           - net-tools
+          - podman
+          # - spellcheck   ## Source TBD
+          - vim
+          - yamllint
         state: present
 
     - name: Create various folder under /srv/
