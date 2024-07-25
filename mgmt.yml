@@ -1,0 +1,19 @@
+# ansible-playbook -i localhost, --ask-pass --ask-become-pass ./mgmt.yml -u ape-admin -vvvv
+---
+
+- name: Configure APE management node
+  hosts: localhost
+  become: true
+  tasks:
+
+    - name: Install required OS packages
+      ansible.builtin.package:
+        name:
+          - ansible-core
+          - ansible-collection-redhat-rhel_mgmt
+          - bind-utils
+          - git
+          - net-tools
+        state: present
+
+

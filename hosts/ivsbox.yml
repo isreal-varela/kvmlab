@@ -4,19 +4,22 @@ tang_host:
 
 ipa_host:
   hosts:
-    dbcombo
+    ipasbx
 
 ipa_client:
 
 logger_client:
 
-nbde_servers:
-
-nbde_clients:
+#nbde_servers:
+#nbde_clients:
 
 foreman_host:
   hosts:
-    george-jr
+    georgesbx
+
+registry_host:
+  hosts:
+    mrsbx
 
 kvms:
   vars:
@@ -37,13 +40,14 @@ all:
     env_classification: 'Unclassified'
     env_label: '{{ dns_name | upper }} - {{ env_classification }} - RogueThink Lab (Downstream)'
     env_colorbar: '#fcff33'
-    frmn_host: "george-jr.{{ dns_name }}"
+    frmn_host: "georgesbx.{{ dns_name }}"
     frmn_url: "https://{{ frmn_host }}"
     frmn_local_dnf_repo: "ape-platform-local-repo"
-    frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/APE_Content_View/"
-    frmn_export_stg_target: "/srv/content_view/APE_Content_View/"
-    frmn_import_stg_source: "/srv/content_view/APE_Content_View/"
-    frmn_import_stg_target: "/opt/pulp/imports/"
+    frmn_content_view: "APE_Content_View"
+    frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/{{ frmn_content_view }}/"
+    frmn_export_stg_target: "/srv/content_view/{{ frmn_content_view }}/"
+    frmn_import_stg_source: "/srv/content_view/{{ frmn_content_view }}/"
+    frmn_import_stg_target: "/opt/pulp/imports/{{ frmn_content_view }}/"
     frmn_import_stg_version_num: "1.0"
     frmn_import_stg_tsfolder: "placeholder_folder_name"
     frmn_import_stg_metadata_filename: "placeholder.json"
@@ -55,6 +59,8 @@ all:
     skip_frmn_stage: false
     skip_frmn_import: false
     kvm_list:
-      - {name: "dbcombo",    ip_addr: "192.168.100.39", enabled: true,  roles: ["ipa_host"                   ], cpus: 2, ram_mb: 2048, iso: "ipa-server"}
-      - {name: "george-jr",  ip_addr: "192.168.100.37", enabled: true,  roles: ["foreman_host", "ipa_client" ], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
+      - {name: "ipasbx",     ip_addr: "192.168.100.51", enabled: true,  roles: ["ipa_host",                    "logger_client" ], cpus: 2, ram_mb: 2048, iso: "ipa-server"}
+      - {name: "georgesbx",  ip_addr: "192.168.100.52", enabled: true,  roles: ["foreman_host",  "ipa_client", "logger_client" ], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
+      - {name: "logger",     ip_addr: "192.168.100.53", enabled: true,  roles: ["logger_host",   "ipa_client"]}
+      - {name: "mrsbx",      ip_addr: "192.168.100.54", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '180G'}
 

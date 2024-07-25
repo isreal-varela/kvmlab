@@ -60,8 +60,8 @@
       ansible.builtin.shell: |
         hammer -c "{{ frmn_hmr_cfg_file }}" content-import version \
                --organization='Default Organization' \
-               --path={{ frmn_import_stg_target }}/APE_Content_View/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/ \
-               --metadata-file={{ frmn_import_stg_target }}/{{ frmn_import_stg_metadata_filename}}
+               --path={{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }} \
+               --metadata-file={{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/metadata.json
       when: not skip_frmn_import
 
   # End of "become" block
@@ -75,7 +75,7 @@
       name: "{{ frmn_act_key }}"
       organization: "{{ frmn_org }}"
       lifecycle_environment: "{{ frmn_lce }}"
-      content_view: "APE Content View"
+      content_view: "{{ frmn_content_view }}"
       content_overrides:
         - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_BaseOS_Repo",                    override: enabled }
         - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_AppStream_Repo",                 override: enabled }
@@ -99,7 +99,7 @@
       architecture: "x86_64"
       operatingsystem: "Rocky Linux 9.4"
       lifecycle_environment: "{{ frmn_lce }}"
-      content_view: "APE Content View"
+      content_view: "{{ frmn_content_view }}"
       openscap_proxy: "{{ frmn_host }}"
       activation_keys: "{{ frmn_act_key }}"
       username: "{{ frmn_usr }}"

@@ -215,7 +215,7 @@
 
   - name: "Create or update content view"
     theforeman.foreman.content_view:
-      name: "APE Content View"
+      name: "{{ frmn_content_view }}"
       organization: "{{ frmn_org }}"
       repositories:
         - { name: "Rocky 9 - BaseOS Repo",    product: "Rocky9 Product" }
@@ -234,7 +234,7 @@
 
   - name: "Ensure content view v1.0 is published into lab"
     theforeman.foreman.content_view_version:
-      content_view: "APE Content View"
+      content_view: "{{ frmn_content_view }}"
       organization: "{{ frmn_org }}"
       version: "1.0"
       lifecycle_environments:
@@ -253,7 +253,7 @@
       name: "{{ frmn_act_key }}"
       organization: "{{ frmn_org }}"
       lifecycle_environment: "{{ frmn_lce }}"
-      content_view: "APE Content View"
+      content_view: "{{ frmn_content_view }}"
       content_overrides:
         - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_BaseOS_Repo",                    override: enabled }
         - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_AppStream_Repo",                 override: enabled }
@@ -279,7 +279,7 @@
       architecture: "x86_64"
       operatingsystem: "Rocky Linux 9.4"
       lifecycle_environment: "{{ frmn_lce }}"
-      content_view: "APE Content View"
+      content_view: "{{ frmn_content_view }}"
       openscap_proxy: "{{ frmn_host }}"
       activation_keys: "{{ frmn_act_key }}"
       username: "{{ frmn_usr }}"
@@ -334,9 +334,10 @@
     block:
 
       - name: "Attempt Content View export"
+        become: true
         ansible.builtin.shell: |
           hammer -c "{{ frmn_hmr_cfg_file }}" content-export complete version \
-                 --content-view='APE Content View' \
+                 --content-view="{{ frmn_content_view }}" \
                  --version='1.0' \
                  --chunk-size-gb=2 \
                  --organization="Default Organization"
@@ -357,23 +358,8 @@
       - frmn_upstream_export
       - frmn_upstream_fetch
 
-  - name: Export/prepare importable artifacts for use "downstream"
-    block:
-
-    - name: "SCP to retrieve metadata file(s) for importable artifacts"
-      delegate_to: localhost
-      ansible.builtin.shell: "scp -r -i /srv/keys/vm_key ansible@{{ frmn_host }}:/home/ansible/metadata*.json {{ frmn_export_stg_target }}/"
-
-    - name: "Retrieve list of importable artifact file name"
-      ansible.builtin.find:
-        paths: "{{ frmn_export_stg_source }}"
-        recurse: true
-        patterns: "*.*"
-      register: frmn_files_to_copy
-
-    - name: "SCP to retrieve importable artifacts"
-      delegate_to: localhost
-      ansible.builtin.shell: "scp -r -i /srv/keys/vm_key ansible@{{ frmn_host }}:{{ frmn_export_stg_source}} {{ frmn_export_stg_target }}/"
-
+  - name: "SCP to retrieve importable artifacts"
+    delegate_to: localhost
+    ansible.builtin.shell: "scp -r -i /srv/keys/vm_key ansible@{{ frmn_host }}:{{ frmn_export_stg_source}} {{ frmn_export_stg_target }}/"
     tags: frmn_upstream_fetch
     when: not skip_frmn_fetch

@@ -89,7 +89,7 @@
       # failed_when: false
 
     # Unmount ISO as should ONLY be req'd prior to and during ipa-server install (via role above)
-    - name: Umount the ISO
+    - name: Unmount the ISO
       ansible.builtin.mount:
         path: /mnt
         state: unmounted

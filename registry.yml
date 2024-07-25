@@ -4,13 +4,13 @@
   hosts: registry_host
   become: true
   roles:
-    - rhel-system-roles.certificate
-  vars:
-    certificate_requests:
-      - name: "{{ inventory_hostname }}"
-        dns: "{{ inventory_hostname }}.{{ dns_name }}"
-        principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
-        ca: ipa
+    - role: rhel-system-roles.certificate
+      vars:
+        certificate_requests:
+          - name: "{{ inventory_hostname }}"
+            dns: "{{ inventory_hostname }}.{{ dns_name }}"
+            principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
+            ca: ipa
 
 - name: Configure firewalld for access to mirror registry
   hosts: registry_host
