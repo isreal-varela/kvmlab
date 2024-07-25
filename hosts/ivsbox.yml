@@ -59,8 +59,8 @@ all:
     skip_frmn_stage: false
     skip_frmn_import: false
     kvm_list:
-      - {name: "ipasbx",     ip_addr: "192.168.100.51", enabled: true,  roles: ["ipa_host",                    "logger_client" ], cpus: 2, ram_mb: 2048, iso: "ipa-server"}
-      - {name: "georgesbx",  ip_addr: "192.168.100.52", enabled: true,  roles: ["foreman_host",  "ipa_client", "logger_client" ], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
+      - {name: "ipasbx",     ip_addr: "192.168.100.51", enabled: true,  roles: ["ipa_host",                    "logger_client"], cpus: 2, ram_mb: 2048, iso: "ipa-server"}
+      - {name: "georgesbx",  ip_addr: "192.168.100.52", enabled: true,  roles: ["foreman_host",  "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
       - {name: "logger",     ip_addr: "192.168.100.53", enabled: true,  roles: ["logger_host",   "ipa_client"]}
-      - {name: "mrsbx",      ip_addr: "192.168.100.54", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '180G'}
+      - {name: "mrsbx",      ip_addr: "192.168.100.54", enabled: true,  roles: ["registry_host", "ipa_client", "logger_client"], ram_mb: 3072, rt_disk: '180G'}
 

@@ -113,11 +113,11 @@
       #  --<many-many-more>
 
     - name: Disable 'APE Local DNF' repository
-       ansible.builtin.yum_repository:
-         name: '{{ frmn_local_dnf_repo }}'
-         baseurl: /mnt
-         enabled: false
-       failed_when: false
+      ansible.builtin.yum_repository:
+        name: '{{ frmn_local_dnf_repo }}'
+        baseurl: /mnt
+        enabled: false
+      failed_when: false
 
     # Unmount ISO as should ONLY be req'd prior to and during "foreman-installer" execution
     - name: Unmount the ISO

@@ -72,7 +72,7 @@
       - name: output_name
         type: forwards
         severity: info
-        target: logger.ape.test
+        target: logger.{{ dns_name }}
         tcp_port: 514
         #tls: true
         #pki_authmode: anon

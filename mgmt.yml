@@ -10,7 +10,7 @@
       ansible.builtin.package:
         name:
           - ansible-core
-          - ansible-collection-redhat-rhel_mgmt
+          # - ansible-collection-redhat-rhel_mgmt
           - bind-utils
           - git
           - net-tools
