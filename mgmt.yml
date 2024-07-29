@@ -26,7 +26,9 @@
     - name: Install required OS packages
       ansible.builtin.package:
         name:
+          - ansible
           - ansible-core
+          - ansible-freeipa
           # - ansible-collection-redhat-rhel_mgmt
           - bash-completion
           - bind-utils
@@ -37,6 +39,7 @@
           - libvirt
           - net-tools
           - podman
+          - rhel-system-roles
           # - spellcheck   ## Source TBD
           - vim
           - yamllint
@@ -74,10 +77,11 @@
 
         - name: Create bridge-slave
           community.general.nmcli:
-            type: bridge-slave
+            type: ethernet
             conn_name: '{{ item.int_name }}'
             ifname: '{{ item.int_name }}'
             master: '{{ item.conn_name }}'
+            slave_type: bridge
             state: present
           with_items:
             - '{{ nmcli_ethernet }}'
