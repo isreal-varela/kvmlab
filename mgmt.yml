@@ -4,6 +4,16 @@
 - name: Configure APE management node
   hosts: localhost
   become: true
+  vars:
+    nmcli_ethernet:
+      - conn_name: br0
+        int_name: ens15f0
+        ip4: '10.40.49.191/24'
+        gw4: '10.40.49.1'
+        dns:
+          - '10.40.49.21'
+          - '10.40.49.22'
+
   tasks:
 
     - name: Include EPEL repository
@@ -46,3 +56,28 @@
         - keys
         - software
         - vmdisks 
+
+    - name: Introduce bridge network configuration
+      block:
+
+        - name: Add bridge connection
+          community.general.nmcli:
+            type: ethernet
+            conn_name: '{{ item.conn_name }}'
+            ifname: '{{ item.conn_name }}'
+            ip4: '{{ item.ip4 }}'
+            gw4: '{{ item.gw4 }}'
+            dns: '{{ item.dns }}'
+            state: present
+          with_items:
+            - '{{ nmcli_ethernet }}'
+
+        - name: Create bridge-slave
+          community.general.nmcli:
+            type: bridge-slave
+            conn_name: '{{ item.int_name }}'
+            ifname: '{{ item.int_name }}'
+            master: '{{ iem.conn_name }}'
+            state: present
+          with_items:
+            - '{{ nmcli_ethernet }}'
