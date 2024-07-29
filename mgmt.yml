@@ -67,7 +67,7 @@
             ifname: '{{ item.conn_name }}'
             ip4: '{{ item.ip4 }}'
             gw4: '{{ item.gw4 }}'
-            dns: '{{ item.dns }}'
+            dns4: '{{ item.dns }}'
             state: present
           with_items:
             - '{{ nmcli_ethernet }}'
@@ -77,7 +77,7 @@
             type: bridge-slave
             conn_name: '{{ item.int_name }}'
             ifname: '{{ item.int_name }}'
-            master: '{{ iem.conn_name }}'
+            master: '{{ item.conn_name }}'
             state: present
           with_items:
             - '{{ nmcli_ethernet }}'
