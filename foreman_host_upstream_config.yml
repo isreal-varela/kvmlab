@@ -87,6 +87,7 @@
       - BaseOS
       - AppStream
       - extras
+      - CRB
 
   - name: "Sync Rocky 9 repositories"
     theforeman.foreman.repository_sync:
@@ -101,6 +102,7 @@
       - BaseOS
       - AppStream
       - extras
+      - CRB
     when: not skip_frmn_repo_sync
 
   # == EPEL repo related objects
