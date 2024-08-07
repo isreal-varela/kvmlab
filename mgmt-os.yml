@@ -1,0 +1,51 @@
+# ansible-playbook -i localhost, --ask-pass --ask-become-pass ./mgmt-os.yml -u ape-admin -vvvv
+---
+
+- name: Configure APE management node
+  hosts: localhost
+  become: true
+
+  tasks:
+
+    - name: Include EPEL repository
+      ansible.builtin.yum_repository:
+        name: epel
+        description: EPEL YUM repo
+        baseurl: https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/
+        gpgcheck: no
+
+    - name: Install required OS packages
+      ansible.builtin.package:
+        name:
+          - ansible
+          - ansible-core
+          - ansible-freeipa
+          - bash-completion
+          - bind-utils
+          - cockpit
+          - cockpit-machines
+          - cockpit-podman
+          - git
+          - guestfs-tools
+          - libvirt
+          - net-tools
+          - podman
+          - rhel-system-roles
+          # - spellcheck   ## Source TBD
+          - vim
+          - yamllint
+        state: present
+
+    - name: Create various folder under /srv/
+      ansible.builtin.file:
+        path: /srv/{{ item }}
+        state: directory
+        owner: root
+        group: libvirt
+        mode: '2777'
+      loop:
+        - content_view
+        - iso
+        - keys
+        - software
+        - vmdisks 

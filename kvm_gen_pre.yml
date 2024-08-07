@@ -1,5 +1,6 @@
 ---
-- hosts: kvms
+- name: Generic KVM pre-config
+  hosts: kvms
   gather_facts: false
 
   tasks:
@@ -26,16 +27,6 @@
         group: root
         mode: '0644'
         backup: true
-
-    - name: "Disable list of internet-accessed repositories"
-      become: true
-      community.general.dnf_config_manager:
-        name:
-          - appstream
-          - baseos
-          - extras
-        state: disabled
-      when: not inet_access
 
     ## ----------------------------------------------------------- ##
     ## Added the following to address from OpenSCAP reported items
@@ -67,3 +58,18 @@
     #   - medium_severity
     #   - no_reboot_needed
     #   - unknown_strategy
+
+- name: Pre-config excluding foreman and ipa
+  hosts: kvms,!foreman_host,!ipa_host
+  gather_facts: false
+
+  tasks:
+
+    - name: "Disable list of internet-accessed repositories"
+      become: true
+      community.general.dnf_config_manager:
+        name:
+          - appstream
+          - baseos
+          - extras
+        state: disabled

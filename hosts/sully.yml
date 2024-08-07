@@ -32,8 +32,8 @@ all:
   vars:
     ansible_python_interpreter: /usr/bin/python3
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-    dns_name: 'ape.test'
-    dns_search: 'ape.test'
+    dns_name: 'ape.sully'
+    dns_search: 'ape.sully'
     env_classification: 'Unclassified'
     env_label: '{{ dns_name | upper }} - {{ env_classification }} - RogueThink Lab (Master/Upstream)'
     env_colorbar: '#067040'
@@ -56,9 +56,10 @@ all:
     skip_frmn_import: true
     inet_access: true
     kvm_list:
-      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",                  ], cpus: 2, ram_mb: 4096}
-      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "ipa_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
-      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '180G'}
-      - {name: "tang",       ip_addr: "192.168.100.71", enabled: false, roles: ["tang_host",     "ipa_client"], ram_mb: 3072}
-      - {name: "vault",      ip_addr: "192.168.100.72", enabled: false, roles: ["vault_host",    "ipa_client"]}
-      - {name: "logger",     ip_addr: "192.168.100.73", enabled: false, roles: ["logger_host",   "ipa_client"]}
+      - {name: "ipa1",       ip_addr: "192.168.122.40", enabled: true,  roles: ["ipa_host",                    "logger_client"], cpus: 2, ram_mb: 4096, iso: "ipa-server"}
+      - {name: "foreman",    ip_addr: "192.168.122.44", enabled: true,  roles: ["foreman_host",  "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
+      - {name: "mirror-reg", ip_addr: "192.168.122.45", enabled: true,  roles: ["registry_host", "ipa_client", "logger_client"], ram_mb: 3072, rt_disk: '180G'}
+      - {name: "logger",     ip_addr: "192.168.122.41", enabled: true,  roles: ["logger_host",   "ipa_client"]}
+      - {name: "test",       ip_addr: "192.168.122.10", enabled: false, roles: [                 "ipa_client", "logger_client"], ram_mb: 4096, rt_disk: '180G'}
+      - {name: "tang",       ip_addr: "192.168.100.71", enabled: false, roles: ["tang_host",     "ipa_client", "logger_client"], ram_mb: 3072}
+      - {name: "vault",      ip_addr: "192.168.100.72", enabled: false, roles: ["vault_host",    "ipa_client", "logger_client"]}

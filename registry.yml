@@ -1,5 +1,18 @@
 ---
 
+- name: "Check cert/key file existance"
+  hosts: registry_host
+  become: true
+  tasks:
+    - name: Check for existance of host cert file
+      ansible.builtin.stat:
+        path: "/etc/pki/tls/certs/{{ inventory_hostname }}.crt"
+      register: stat_crt
+    - name: Check for existance of host key file
+      ansible.builtin.stat:
+        path: "/etc/pki/tls/private/{{ inventory_hostname }}.key"
+      register: stat_key
+
 - name: Generate certificates for use with Quay mirror registry
   hosts: registry_host
   become: true
@@ -11,11 +24,14 @@
             dns: "{{ inventory_hostname }}.{{ dns_name }}"
             principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
             ca: ipa
+            run_before: systemctl stop quay-app.service
+      when: not stat_crt.stat.exists or not stat_key.stat.exists
 
-- name: Configure firewalld for access to mirror registry
+- name: Configure mirror registry
   hosts: registry_host
   become: true
   tasks:
+
     - name: Allow incoming API traffic to the local host and then to pod
       ansible.builtin.include_role:
         name: rhel-system-roles.firewall
@@ -25,28 +41,70 @@
             state: enabled
             runtime: true
             permanent: true
+
     - name: Create target folder for software upload
       ansible.builtin.file:
         path: /srv/quay_install
         state: directory
         owner: ansible
         mode: '0755'
+
     - name: Create target quay configuration files
       ansible.builtin.file:
         path: /opt/quay
         state: directory
         owner: ansible
         mode: '0755'
+
+    - name: Create target quay configuration files
+      ansible.builtin.file:
+        path: /opt/quay/quay-config
+        state: directory
+        owner: ansible
+        mode: '0755'
+
     - name: Install podman
       become: true
       ansible.builtin.package:
         name: podman
         state: present
+
     - name: Stage 'mirror-registry' archive on target for later execution
       become: false
       ansible.builtin.unarchive:
         src: /srv/software/mirror-registry.tar.gz
         dest: /srv/quay_install
+
+    - name: "Check for existance of host cert file"
+      ansible.builtin.stat:
+        path: "/opt/quay/quay-config/{{ inventory_hostname }}.crt"
+      register: stat_crt
+
+    - name: Check for existance of host key file
+      ansible.builtin.stat:
+        path: "/opt/quay/quay-config/{{ inventory_hostname }}.key"
+      register: stat_key
+
+    - name: Copy cert file within target node
+      ansible.builtin.shell: |
+        cp -p "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
+              "/opt/quay/quay-config/"
+      when: not stat_crt.stat.exists
+
+    - name: Copy key file within target node
+      ansible.builtin.shell: |
+        cp -p "/etc/pki/tls/private/{{ inventory_hostname }}.key" \
+              "/opt/quay/quay-config/"
+      when: not stat_key.stat.exists
+
+    ## Unlike Foreman, the mirror-registry installer is not as 'idempotent'.
+    ## Meaning it will error out when run when an instance already has components
+    ## in-place/installed.
+    ##
+    ## Reverted these "new" lines back to the "originals" and the "staged"
+    ##   copies above are "unused".
+    ##                              --sslCert "/opt/quay/quay-config/{{ inventory_hostname }}.crt" \
+    ##                              --sslKey "/opt/quay/quay-config/{{ inventory_hostname }}.key" \
     - name: Execute mirror-registry installer
       become: true
       ansible.builtin.shell: |
