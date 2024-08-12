@@ -9,20 +9,12 @@
   - name: "Tasks specific to a 'downsteam' IPA server instance"
     block:
 
-    - name: Create /home/ansible/stg-repo folder
-      ansible.builtin.file:
-        path: "/home/ansible/stg-repo"
-        owner: ansible
-        group: ansible
-        recurse: true
-        mode: 0770
-      when: not inet_access
-
     - name: Mount the ISO file
       ansible.builtin.mount:
         path: "/mnt"
         src: "/dev/sr1"
         fstype: "iso9660"
+        boot: false
         opts: "ro,noauto"
         state: mounted
 
@@ -31,7 +23,7 @@
         path: /etc/yum.repos.d/ipa-server-local.repo
       register: repofile_stat_result
 
-    - name: "Upload 'ipa-server-iso.repo' file"
+    - name: "Upload 'ipa-server-local.repo' file"
       ansible.builtin.template:
         src: ipa-server-iso.repo.j2
         dest: "/etc/yum.repos.d/ipa-server-local.repo"
@@ -43,7 +35,8 @@
       when: not repofile_stat_result.stat.exists
       failed_when: false
 
-    when: not inet_access
+    when: not ( is_upstream | default(false) )
+    # when: not inet_access
   # ---------------------------------------------------------------------------
 
   - name: Get ethernet interface names to be used later for disabling ipv6
@@ -83,7 +76,7 @@
 
     - name: Disable 'APE Local DNF' repository
       ansible.builtin.yum_repository:
-        name: '{{ frmn_local_dnf_repo }}'
+        name: '{{ local_dnf_repo }}'
         # baseurl: /mnt
         enabled: false
       # failed_when: false
@@ -94,8 +87,8 @@
         path: /mnt
         state: unmounted
 
+    when: not ( is_upstream | default(false) )
     # when: not inet_access
-    when: false
   # ---------------------------------------------------------------------------
 
 - name: Playbook to configure IPA clients

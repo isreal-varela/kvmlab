@@ -41,7 +41,6 @@
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name remote_execution_ssh_user --value "ansible"
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name ansible_ssh_private_key_file --value "/usr/share/foreman-proxy/.ssh/id_rsa_foreman_proxy"
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name pulpcore_export_destination --value "/opt/pulp/exports"
-    # failed_when: false
 
   - name: "Prepare to import into 'downstream' Foreman instance"
     become: true
@@ -54,7 +53,9 @@
         owner: pulp
         group: pulp
         mode: 0775
-      when: not skip_frmn_stage
+      tags:
+        - frmn_downstream_upload
+        - frmn_downstream_import
 
     - name: "Execute import of staged foreman content view"
       ansible.builtin.shell: |
@@ -62,7 +63,7 @@
                --organization='Default Organization' \
                --path={{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }} \
                --metadata-file={{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/metadata.json
-      when: not skip_frmn_import
+      tags: frmn_downstream_import
 
   # End of "become" block
   # ---------------------------------------------------------------------------
@@ -89,6 +90,7 @@
       server_url: "{{ frmn_url }}"
       validate_certs: "{{ frmn_validate_cert }}"
       state: present
+    tags: frmn_downstream_config
 
   - name: "Create or update APE hostgroup"
     theforeman.foreman.hostgroup:
@@ -107,6 +109,7 @@
       server_url: "{{ frmn_url }}"
       validate_certs: "{{ frmn_validate_cert }}"
       state: present
+    tags: frmn_downstream_config
 
   - name: "Bulk upload OpenSCAP content"
     ansible.builtin.shell: |
@@ -115,15 +118,18 @@
     failed_when:
       - ( hammer_out.rc != 0 )
       - ( hammer_out.rc != 65 )
+    tags: frmn_downstream_config
 
   - name: "Query for policy"
     ansible.builtin.shell: |
       hammer -c "{{ frmn_hmr_cfg_file }}" --output json policy info --name '{{ frmn_gen_name }} Policy' | jq '.Id'
     register: hammer_qry
     failed_when: false
+    tags: frmn_downstream_config
   - name: "Set frmn_policy_exists fact"
     set_fact:
       frmn_policy_exists: "{% if ( hammer_qry.rc != 0 ) or ( hammer_qry.stdout == '' ) %}false{% else %}true{% endif %}"
+    tags: frmn_downstream_config
 
   - name: "Create policy"
     ansible.builtin.shell: |
@@ -134,6 +140,7 @@
       - ( hammer_out.rc != 0 )
       - ( hammer_out.rc != 65 )
       - '"Name has already been taken" not in hammer_out.stdout'
+    tags: frmn_downstream_config
 
   - name: "Update policy"
     ansible.builtin.shell: |
@@ -144,5 +151,6 @@
       - ( hammer_out.rc != 0 )
       - ( hammer_out.rc != 65 )
       - '"Name has already been taken" not in hammer_out.stdout'
+    tags: frmn_downstream_config
 
     # ---------------------------------------------------------------------------

@@ -25,6 +25,7 @@
           - cockpit
           - cockpit-machines
           - cockpit-podman
+          - createrepo_c
           - git
           - guestfs-tools
           - libvirt
@@ -48,4 +49,4 @@
         - iso
         - keys
         - software
-        - vmdisks 
+        - vmdisks

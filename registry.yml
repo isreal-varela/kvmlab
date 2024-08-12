@@ -32,6 +32,32 @@
   become: true
   tasks:
 
+    - name: Mount the ISO file
+      ansible.builtin.mount:
+        path: "/mnt"
+        src: "/dev/sr1"
+        fstype: "iso9660"
+        boot: false
+        opts: "ro,noauto"
+        state: mounted
+
+    - name: "Check that the /etc/yum.repos.d/registry-local.repo exists"
+      ansible.builtin.stat:
+        path: /etc/yum.repos.d/registry-local.repo
+      register: repofile_stat_result
+
+    - name: "Upload 'registry-local.repo' file"
+      ansible.builtin.template:
+        src: registry-iso.repo.j2
+        dest: "/etc/yum.repos.d/registry-local.repo"
+      when: not repofile_stat_result.stat.exists
+
+    - name: Execute dnf update
+      ansible.builtin.shell: |
+        dnf --assumeno --nobest update
+      when: not repofile_stat_result.stat.exists
+      failed_when: false
+
     - name: Allow incoming API traffic to the local host and then to pod
       ansible.builtin.include_role:
         name: rhel-system-roles.firewall
@@ -58,7 +84,7 @@
 
     - name: Create target quay configuration files
       ansible.builtin.file:
-        path: /opt/quay/quay-config
+        path: /opt/quay/stage
         state: directory
         owner: ansible
         mode: '0755'
@@ -68,6 +94,12 @@
       ansible.builtin.package:
         name: podman
         state: present
+
+    # BeetleD (2024-08-09, 14:45 UTC): Apparently, this module relies on podman being installed.
+    - name: Gather facts for podman containers prior to install
+      containers.podman.podman_container_info:
+    #   name:
+    #     - quay-app
 
     - name: Stage 'mirror-registry' archive on target for later execution
       become: false
@@ -88,13 +120,13 @@
     - name: Copy cert file within target node
       ansible.builtin.shell: |
         cp -p "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
-              "/opt/quay/quay-config/"
+              "/opt/quay/stage/"
       when: not stat_crt.stat.exists
 
     - name: Copy key file within target node
       ansible.builtin.shell: |
         cp -p "/etc/pki/tls/private/{{ inventory_hostname }}.key" \
-              "/opt/quay/quay-config/"
+              "/opt/quay/stage/"
       when: not stat_key.stat.exists
 
     ## Unlike Foreman, the mirror-registry installer is not as 'idempotent'.
@@ -103,8 +135,8 @@
     ##
     ## Reverted these "new" lines back to the "originals" and the "staged"
     ##   copies above are "unused".
-    ##                              --sslCert "/opt/quay/quay-config/{{ inventory_hostname }}.crt" \
-    ##                              --sslKey "/opt/quay/quay-config/{{ inventory_hostname }}.key" \
+    ##                              --sslCert "/opt/quay/stage/{{ inventory_hostname }}.crt" \
+    ##                              --sslKey "/opt/quay/stage/{{ inventory_hostname }}.key" \
     - name: Execute mirror-registry installer
       become: true
       ansible.builtin.shell: |
@@ -118,3 +150,9 @@
                                   --sslCheckSkip false \
                                   --verbose
       register: exec_output
+
+    # BeetleD (2024-08-09, 14:45 UTC): Apparently, this module relies on podman being installed.
+    - name: Gather facts for podman containers prior to install
+      containers.podman.podman_container_info:
+    #   name:
+    #     - quay-app

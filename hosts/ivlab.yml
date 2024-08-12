@@ -17,6 +17,12 @@ nbde_clients:
 foreman_host:
   hosts:
     foreman
+  vars:
+    is_upstream: true
+
+registry_host:
+  hosts:
+    mirror-reg
 
 kvms:
   vars:
@@ -39,7 +45,6 @@ all:
     env_colorbar: '#067040'
     frmn_host: "foreman.{{ dns_name }}"
     frmn_url: "https://{{ frmn_host }}"
-    frmn_local_dnf_repo: "ape-platform-local-repo"
     frmn_content_view: "APE_Content_View"
     frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/{{ frmn_content_view }}/"
     frmn_export_stg_target: "/srv/content_view/"
@@ -48,17 +53,18 @@ all:
     frmn_import_stg_version_num: "1.0"
     frmn_import_stg_tsfolder: "placeholder_folder_name"
     frmn_import_stg_metadata_filename: "placeholder.json"
+    local_dnf_repo: "ape-platform-local-repo"
     skip_frmn_register: false
-    skip_frmn_repo_sync: false
-    skip_frmn_export: false
-    skip_frmn_fetch: false
-    skip_frmn_stage: true
-    skip_frmn_import: true
-    inet_access: true
+    # skip_frmn_repo_sync: false
+    # skip_frmn_export: false
+    # skip_frmn_fetch: false
+    # skip_frmn_stage: true
+    # skip_frmn_import: true
+    # inet_access: true
     kvm_list:
       - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",                  ], cpus: 2, ram_mb: 4096}
       - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "ipa_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
-      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '180G'}
+      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '180G', iso: "registry"}
       - {name: "tang",       ip_addr: "192.168.100.71", enabled: false, roles: ["tang_host",     "ipa_client"], ram_mb: 3072}
       - {name: "vault",      ip_addr: "192.168.100.72", enabled: false, roles: ["vault_host",    "ipa_client"]}
       - {name: "logger",     ip_addr: "192.168.100.73", enabled: false, roles: ["logger_host",   "ipa_client"]}
