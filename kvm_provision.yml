@@ -6,7 +6,7 @@
   vars:
     vcpus: 2
     ram_mb: 2048
-    net: br0
+    # net: br0
     # dns_name: ape.test
 
   tasks:
@@ -74,9 +74,11 @@
         vm_ram_mb: "{{ item.ram_mb | default(ram_mb) }}"
         vm_root_disk: "{{ item.rt_disk | default(vm_disk) }}"
         vm_net: "{{ item.net | default(net) }}"
+        vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
+        vm_net2: "{{ item.net2 | default() }}"
+        vm_ip_addr2: "{{ item.ip_addr | regex_replace('100','122') | default() }}"
         vm_iso: "{{ item.iso | default() }}"
         cleanup_tmp: "{{ cleanup }}"
-        vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_roles: "{{ item.roles | default([]) }}"
         cloud_init_user_data: "{{ libvirt_pool_dir }}/{{ item.name }}/user-data"
         cloud_init_meta_data: "{{ libvirt_pool_dir }}/{{ item.name }}/meta-data"

@@ -55,6 +55,8 @@
           - "          vm_root_disk: '{{ vm_root_disk }}'"
           - "                vm_net: '{{ vm_net }}'"
           - "            vm_ip_addr: {{ vm_ip_addr }}"
+          - "               vm_net2: '{{ vm_net2 }}'"
+          - "           vm_ip_addr2: {{ vm_ip_addr2 }}"
           - "              vm_roles: '{{ vm_roles }}'"
           - "                vm_iso: '{{ vm_iso }}'"
           - "              dns_name: '{{ dns_name }}'"

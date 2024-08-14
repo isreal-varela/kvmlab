@@ -10,9 +10,8 @@ ipa_client:
 
 logger_client:
 
-nbde_servers:
-
-nbde_clients:
+#nbde_servers:
+#nbde_clients:
 
 foreman_host:
   hosts:
@@ -28,11 +27,11 @@ kvms:
   vars:
     ansible_connection: ssh
 
-containers:
-  vars:
-    ansible_connection=podman
-    ansible_python_interpreter=auto_silent
-  children:
+# containers:
+#   vars:
+#     ansible_connection: podman
+#     ansible_python_interpreter: auto_silent
+#   children:
 
 all:
   vars:
@@ -60,7 +59,6 @@ all:
     # skip_frmn_fetch: false
     # skip_frmn_stage: true
     # skip_frmn_import: true
-    # inet_access: true
     kvm_list:
       - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",                  ], cpus: 2, ram_mb: 4096}
       - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "ipa_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}

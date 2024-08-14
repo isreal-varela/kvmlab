@@ -16,6 +16,8 @@ logger_client:
 foreman_host:
   hosts:
     georgesbx
+  vars:
+    is_upstream: false
 
 registry_host:
   hosts:
@@ -25,11 +27,11 @@ kvms:
   vars:
     ansible_connection: ssh
 
-containers:
-  vars:
-    ansible_connection=podman
-    ansible_python_interpreter=auto_silent
-  children:
+# containers:
+#   vars:
+#     ansible_connection: podman
+#     ansible_python_interpreter: auto_silent
+#   children:
 
 all:
   vars:
@@ -42,7 +44,6 @@ all:
     env_colorbar: '#fcff33'
     frmn_host: "georgesbx.{{ dns_name }}"
     frmn_url: "https://{{ frmn_host }}"
-    frmn_local_dnf_repo: "ape-platform-local-repo"
     frmn_content_view: "APE_Content_View"
     frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/{{ frmn_content_view }}/"
     frmn_export_stg_target: "/srv/content_view/{{ frmn_content_view }}/"
@@ -51,13 +52,13 @@ all:
     frmn_import_stg_version_num: "1.0"
     frmn_import_stg_tsfolder: "placeholder_folder_name"
     frmn_import_stg_metadata_filename: "placeholder.json"
-    inet_access: false
+    local_dnf_repo: "ape-platform-local-repo"
     skip_frmn_register: false
-    skip_frmn_repo_sync: false
-    skip_frmn_export: true
-    skip_frmn_fetch: true
-    skip_frmn_stage: false
-    skip_frmn_import: false
+    # skip_frmn_repo_sync: false
+    # skip_frmn_export: true
+    # skip_frmn_fetch: true
+    # skip_frmn_stage: false
+    # skip_frmn_import: false
     kvm_list:
       - {name: "ipasbx",     ip_addr: "192.168.100.51", enabled: true,  roles: ["ipa_host",                    "logger_client"], cpus: 2, ram_mb: 2048, iso: "ipa-server"}
       - {name: "georgesbx",  ip_addr: "192.168.100.52", enabled: true,  roles: ["foreman_host",  "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
