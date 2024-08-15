@@ -13,7 +13,6 @@
     - name: "Include task list for Foreman Master/Upstream config"
       include_tasks: foreman_host_upstream_config.yml
       when: ( is_upstream | default(false) )
-      # when: inet_access
 
     - name: "Include task list for Foreman Host/Downstream config"
       vars:
@@ -23,7 +22,6 @@
         frmn_lce: "Library"
       include_tasks: foreman_host_downstream_config.yml
       when: not ( is_upstream | default(false) )
-      # when: not inet_access
 
     # ---------------------------------------------------------------------------
     #  When using the "generate-command", it would be used for any previously

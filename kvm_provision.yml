@@ -76,7 +76,7 @@
         vm_net: "{{ item.net | default(net) }}"
         vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_net2: "{{ item.net2 | default() }}"
-        vm_ip_addr2: "{{ item.ip_addr | regex_replace('100','122') | default() }}"
+        vm_ip_addr2: "{{ item.ip_addr2 | default() }}"
         vm_iso: "{{ item.iso | default() }}"
         cleanup_tmp: "{{ cleanup }}"
         vm_roles: "{{ item.roles | default([]) }}"

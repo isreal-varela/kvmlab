@@ -36,7 +36,6 @@
       failed_when: false
 
     when: not ( is_upstream | default(false) )
-    # when: not inet_access
   # ---------------------------------------------------------------------------
 
   - name: Get ethernet interface names to be used later for disabling ipv6
@@ -77,9 +76,9 @@
     - name: Disable 'APE Local DNF' repository
       ansible.builtin.yum_repository:
         name: '{{ local_dnf_repo }}'
-        # baseurl: /mnt
+        baseurl: /mnt
         enabled: false
-      # failed_when: false
+      failed_when: false
 
     # Unmount ISO as should ONLY be req'd prior to and during ipa-server install (via role above)
     - name: Unmount the ISO
@@ -88,7 +87,6 @@
         state: unmounted
 
     when: not ( is_upstream | default(false) )
-    # when: not inet_access
   # ---------------------------------------------------------------------------
 
 - name: Playbook to configure IPA clients

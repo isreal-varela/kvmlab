@@ -14,7 +14,7 @@ network:
             - {{ dns2 }}
           dns_search:
             - {{ dns_search }}
-{% if vm_ip_addr2 is defined and vm_ip_addr2 != '' %}
+{% if ( vm_net2 is defined and vm_net2 != '' ) and ( vm_ip_addr2 is defined and vm_ip_addr2 != '' )%}
     - type: physical
       name: enp2s0
       subnets:

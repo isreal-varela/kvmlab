@@ -24,15 +24,6 @@
         recurse: true
         mode: 0775
 
-    # - name: Create /home/ansible/stg-repo folder
-    #   ansible.builtin.file:
-    #     path: "/home/ansible/stg-repo"
-    #     owner: ansible
-    #     group: ansible
-    #     recurse: true
-    #     mode: 0770
-    #   when: not inet_access
-
     - name: Allow incoming traffic to the local host
       ansible.builtin.include_role:
         name: rhel-system-roles.firewall

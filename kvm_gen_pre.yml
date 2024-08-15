@@ -35,7 +35,7 @@
         ansible_ssh_private_key_file: "{{ vault_kvm_os_usr_ans_keyfile }}"
 
 - name: Pre-config excluding foreman and ipa
-  hosts: kvms,!foreman_host,!ipa_host
+  hosts: kvms    #,!foreman_host,!ipa_host
   gather_facts: false
 
   tasks:
