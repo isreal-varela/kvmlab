@@ -14,7 +14,8 @@ ipa_host:
     ipaserver_setup_dns: true
     ipaserver_setup_kra: true
     ipaserver_no_hbac_allow: true
-    ipaserver_forwarders: '10.40.49.21,10.40.49.22'
+    #ipaserver_forwarders: '10.40.49.21,10.40.49.22'
+    ipaserver_no_forwarders: true
     ipaserver_setup_ca: true
     ipaserver_hostname: "ipa1.{{ dns_name}}"
 
@@ -25,11 +26,11 @@ ipa_client:
     ipaclient_domain: "{{ dns_name }}"
     ipaclient_cleanup_dns_resolver: true
     ipaclient_mkhomedir: true
-    ipaclient_ntp_servers: 192.168.100.40
+    ipaclient_ntp_servers: 192.168.122.40
     ipaclient_ssh_trust_dns: true
     ipasssd_enable_dns_updates: true
     ipaclient_configure_dns_resolver: true
-    ipaclient_dns_servers: 192.168.100.40
+    ipaclient_dns_servers: 192.168.122.40
     ipaclient_force_join: true
 
 logger_client:
@@ -60,13 +61,13 @@ kvms:
 all:
   vars:
 
-    # Dual ethernet connection testing
-    vm_net: virbr0
-    net: virbr0
-    gateway: 192.168.100.1
-    dns1:  192.168.100.40
-    dns2: 10.40.49.21
-    #
+    # Various default network configuration settings (some from group_vars/ipa* files)
+    vm_net: br_int
+    net: br_int
+    gateway: 192.168.122.1
+    gateway2: 10.40.49.1
+    dns1:  10.40.49.21
+    dns2: 10.40.49.22
 
     ansible_python_interpreter: /usr/bin/python3
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
@@ -93,9 +94,9 @@ all:
     # skip_frmn_stage: true
     # skip_frmn_import: true
     kvm_list:
-      - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",                  ], cpus: 2, ram_mb: 4096, iso: "ipa-server"}
-      - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "ipa_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman", net2: "br0", ip_addr2: "10.40.49.198"}
-      - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '180G', iso: "registry"}
-      - {name: "logger",     ip_addr: "192.168.100.41", enabled: false, roles: ["logger_host",   "ipa_client"]}
-      - {name: "tang",       ip_addr: "192.168.100.71", enabled: false, roles: ["tang_host",     "ipa_client", "logger_client"], ram_mb: 3072}
-      - {name: "vault",      ip_addr: "192.168.100.72", enabled: false, roles: ["vault_host",    "ipa_client", "logger_client"]}
+      - {name: "ipa1",       ip_addr: "192.168.122.40", enabled: true,  roles: ["ipa_host",                  ], cpus: 2, ram_mb: 4096, iso: "ipa-server"}
+      - {name: "foreman",    ip_addr: "192.168.122.44", enabled: true,  roles: ["foreman_host",  "ipa_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman", net2: "br0", ip_addr2: "10.40.49.198"}
+      - {name: "mirror-reg", ip_addr: "192.168.122.45", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '180G', iso: "registry"}
+      - {name: "logger",     ip_addr: "192.168.122.41", enabled: false, roles: ["logger_host",   "ipa_client"]}
+      - {name: "tang",       ip_addr: "192.168.122.71", enabled: false, roles: ["tang_host",     "ipa_client", "logger_client"], ram_mb: 3072}
+      - {name: "vault",      ip_addr: "192.168.122.72", enabled: false, roles: ["vault_host",    "ipa_client", "logger_client"]}

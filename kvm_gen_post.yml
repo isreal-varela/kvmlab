@@ -77,7 +77,7 @@
 
       when:
         - not skip_frmn_register
-        - hostvars['localhost'].foreman_host_specified
+        - ( hostvars['localhost'].foreman_host_specified | default(false) )
 
 - hosts: foreman_host
   gather_facts: false
@@ -104,6 +104,6 @@
 
       when:
         - not skip_frmn_register
-        - hostvars['localhost'].foreman_host_specified
+        - ( hostvars['localhost'].foreman_host_specified | default(false) )
 
 # --------------------------------------------------------------------------------------------------

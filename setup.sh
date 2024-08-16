@@ -3,7 +3,7 @@
 function __usage {
 	echo
 	echo "$(basename $0) <environment name>"
-	echo "  where "environment name" is used to determined the appropriate inventory"
+	echo "  where <environment name> is used to determined the appropriate inventory"
 	echo "    and secrets files used for the playbook execution"
 	echo
 	exit 1

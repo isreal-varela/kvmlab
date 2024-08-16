@@ -24,7 +24,7 @@ Upon launching "./setup.sh <environment name>", user will be prompted for multip
 - "SSH password" -- password for "current user" executing the playbook on the server HOSTING all the KVM instances
 - "BECOME password" -- usually the same as the value for "SSH password" (will default to that value when simply hitting ENTER w/o any other entry)
 - "Vault password" -- used to decrypt the referenced "secrets" file containing values (mainly passwords) for various configured items
-    (i.e. IPA admin user, QUAY admin user, etc.)
+    (i.e. IPA/FOREMAN/QUAY admin user, etc.)
 
 The single parameter required to run the setup stipulates the "environment name" for which there need to be corresponding files (with ".yml" extension) in both the hosts and secrets folders.  If the parameter is NOT provided or corresponding files in those two folders not located, the playbook will NOT be executed.
 

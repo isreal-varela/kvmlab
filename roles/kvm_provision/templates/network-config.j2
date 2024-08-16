@@ -10,8 +10,7 @@ network:
           address: {{ vm_ip_addr }}/{{ subnet }}
           gateway: {{ gateway }}
           dns_nameservers:
-            - {{ dns1 }}
-            - {{ dns2 }}
+            - 192.168.122.40
           dns_search:
             - {{ dns_search }}
 {% if ( vm_net2 is defined and vm_net2 != '' ) and ( vm_ip_addr2 is defined and vm_ip_addr2 != '' )%}
@@ -20,4 +19,8 @@ network:
       subnets:
         - type: static
           address: {{ vm_ip_addr2 }}/{{ subnet }}
+          gateway: {{ gateway2 }}
+          dns_nameservers:
+            - {{ dns1 }}
+            - {{ dns2 }}
 {% endif %}
