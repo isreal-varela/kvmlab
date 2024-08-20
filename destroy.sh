@@ -31,6 +31,11 @@ fi
 
 strEnvName=$1
 shift 1
+if ! [ -n "$strEnvName" ]; then
+	echo "Environment not specified!"
+	__usage
+	exit 1
+fi
 if ! [ -f ./hosts/$strEnvName.yml ]; then
 	echo "./hosts/${strEnvName}.yml file not found!"
 	boolParamIssue=1

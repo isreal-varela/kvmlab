@@ -69,25 +69,18 @@
 
   tasks:
 
-  # ---------------------------------------------------------------------------
-  - name: "Cleanup Tasks specific to a 'downsteam' IPA server instance"
-    block:
+  - name: Disable 'APE Local DNF' repository
+    ansible.builtin.yum_repository:
+      name: '{{ local_dnf_repo }}'
+      baseurl: /mnt
+      enabled: false
+    failed_when: false
 
-    - name: Disable 'APE Local DNF' repository
-      ansible.builtin.yum_repository:
-        name: '{{ local_dnf_repo }}'
-        baseurl: /mnt
-        enabled: false
-      failed_when: false
-
-    # Unmount ISO as should ONLY be req'd prior to and during ipa-server install (via role above)
-    - name: Unmount the ISO
-      ansible.builtin.mount:
-        path: /mnt
-        state: unmounted
-
-    when: not ( is_upstream | default(false) )
-  # ---------------------------------------------------------------------------
+  # Unmount ISO as should ONLY be req'd prior to and during ipa-server install (via role above)
+  - name: Unmount the ISO
+    ansible.builtin.mount:
+      path: /mnt
+      state: unmounted
 
 - name: Playbook to configure IPA clients
   hosts: ipa_client

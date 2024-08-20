@@ -39,8 +39,8 @@ logger_client:
 #nbde_clients:
 
 foreman_host:
-  hosts:
-    foreman
+  # hosts:
+  #   foreman
   vars:
     is_upstream: true
 

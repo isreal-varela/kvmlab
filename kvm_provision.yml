@@ -59,10 +59,10 @@
         state: present
       become: true
       with_items:
-        - '{{ kvm_list | selectattr("enabled") | list }}'
+      - '{{ kvm_list | selectattr("enabled") | list }}'
       tags:
-        - kvm_prov
-        - kvm_pre_cfg
+      - kvm_prov
+      - kvm_pre_cfg
 
     - name: KVM Provision role
       ansible.builtin.include_role:
@@ -84,54 +84,54 @@
         cloud_init_meta_data: "{{ libvirt_pool_dir }}/{{ item.name }}/meta-data"
         cloud_init_network_config: "{{ libvirt_pool_dir }}/{{ item.name }}/network-config"
       with_items:
-        - '{{ kvm_list | selectattr("enabled") | list }}'
+      - '{{ kvm_list | selectattr("enabled") | list }}'
       tags:
-        - kvm_prov
-        - kvm_pre_cfg
+      - kvm_prov
+      - kvm_pre_cfg
 
 - name: Include a play for generic KVM "PRE" configuration
   ansible.builtin.import_playbook: kvm_gen_pre.yml
   tags:
-    - kvm_pre_cfg
+  - kvm_pre_cfg
 
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
   tags:
-    - nbde_cfg
+  - nbde_cfg
 
 - name: Include a play for IPA Server/Client
   become: true
   ansible.builtin.import_playbook: ipa.yml
   tags:
-    - ipa_cfg
+  - ipa_cfg
 
 - name: Include a play for Foreman
   ansible.builtin.import_playbook: foreman.yml
   tags:
-    - foreman_cfg
+  - foreman_cfg
 
 - name: Include a play for Mirror-Registry
   ansible.builtin.import_playbook: registry.yml
   tags:
-    - mirror-reg_cfg
+  - mirror-reg_cfg
 
 - name: Include a play for Hashicorp Vault
   ansible.builtin.import_playbook: vault.yml
   tags:
-    - vault_cfg
+  - vault_cfg
 
 - name: Include a play for Syslog Servers/Clients
   ansible.builtin.import_playbook: logging.yml
   tags:
-    - logger_cfg
+  - logger_cfg
 
 - name: Include "miscellaneous" tasks
   ansible.builtin.import_playbook: misc.yml
   tags:
-    - misc_cfg
-    - kvm_post_cfg
+  - misc_cfg
+  - kvm_post_cfg
 
 - name: Include a play for generic KVM "POST" configuration
   ansible.builtin.import_playbook: kvm_gen_post.yml
   tags:
-    - kvm_post_cfg
+  - kvm_post_cfg

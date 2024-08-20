@@ -30,10 +30,14 @@
       ansible.builtin.shell:
         hammer -c "{{ frmn_hmr_cfg_file }}" host-registration generate-command --activation-keys "{{ frmn_act_key }}"
       register: frmn_reg_cmd
+      when:
+        - not skip_frmn_register
 
     - name: "Save host-registration command"
       set_fact:
         reg_cmd: "{{ frmn_reg_cmd.stdout }}"
+      when:
+        - not skip_frmn_register
 
 # --------------------------------------------------------------------------------------------------
 

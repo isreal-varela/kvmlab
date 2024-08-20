@@ -11,6 +11,7 @@
             dns: "{{ inventory_hostname }}.{{ dns_name }}"
             principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
             ca: ipa
+      when: ( is_upstream == false )
 
 - name: Playbook to install foreman
   hosts: foreman_host
@@ -70,7 +71,26 @@
         name: ansiblerole-foreman_scap_client
         state: present
 
-    - name: Execute foreman-installer
+    - name: Execute foreman-installer (upstream-only)
+      ansible.builtin.shell: |
+        foreman-installer --scenario katello \
+          --foreman-proxy-content-pulpcore-additional-export-paths /opt/pulp/exports \
+          --foreman-proxy-content-pulpcore-additional-import-paths /opt/pulp/imports \
+          --foreman-initial-admin-first-name='{{ dns_name | upper }}' \
+          --foreman-initial-admin-last-name='Administator' \
+          --foreman-initial-admin-username='admin' \
+          --foreman-initial-admin-password='{{ vault_foreman_admin_pwd }}' \
+          --enable-foreman-compute-libvirt \
+          --enable-foreman-plugin-openscap \
+          --enable-foreman-proxy-plugin-openscap \
+          --enable-foreman-cli-openscap \
+          --enable-foreman-plugin-ansible \
+          --enable-foreman-proxy-plugin-ansible \
+          -l INFO
+      # register: fm_install_rc
+      when: ( is_upstream == true )
+
+    - name: Execute foreman-installer (downstream-only)
       ansible.builtin.shell: |
         foreman-installer --scenario katello \
           --certs-server-cert='/etc/pki/tls/certs/{{ inventory_hostname }}.crt' \
@@ -89,7 +109,8 @@
           --enable-foreman-plugin-ansible \
           --enable-foreman-proxy-plugin-ansible \
           -l INFO
-      register: fm_install_rc
+      # register: fm_install_rc
+      when: ( is_upstream == false )
 
       # HOLDING PEN FOR OTHER POSSIBLE CLI PARAMETERS
       #    --enable-foreman-plugin-remote-execution \
