@@ -46,7 +46,7 @@ if ! [ -f ./secrets/${strEnvName}.yml ]; then
 fi
 
 strIPAHost=$1
-shift
+shift 1
 if [[ -z "$strIPAHost" ]]; then
 	echo "IPA Host not specified!"
 	boolParamIssue=1
@@ -55,6 +55,12 @@ fi
 if [[ boolParamIssue -ne 0 ]]; then
 	__usage
 fi
+
+echo Using the following files:
+echo \- hosts/${strEnvName}.yml for playbook "-i" parameter
+echo \-  secrets/${strEnvName}.yml for playbook extraVars
+echo And IPA Host = "${strIPAHost}"
+echo \- $@
 
 list=$(__join "," $@)
 if [ -z "${list}" ]; then

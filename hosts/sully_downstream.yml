@@ -34,15 +34,17 @@ ipa_client:
     ipaclient_force_join: true
 
 logger_client:
+  hosts:
+    logger
 
 #nbde_servers:
 #nbde_clients:
 
 foreman_host:
-  # hosts:
-  #   foreman
+  hosts:
+    foreman
   vars:
-    is_upstream: true
+    is_upstream: false
 
 registry_host:
   hosts:
@@ -65,17 +67,17 @@ all:
     vm_net: br_int
     net: br_int
     gateway: 192.168.122.1
-    gateway2: 10.40.49.1
-    dns1:  10.40.49.21
-    dns2: 10.40.49.22
+    # gateway2: 10.40.49.1
+    # dns1:  10.40.49.21
+    # dns2: 10.40.49.22
 
     ansible_python_interpreter: /usr/bin/python3
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-    dns_name: 'ape.sully'
-    dns_search: 'ape.sully'
+    dns_name: 'ape.dwnstrm'
+    dns_search: 'ape.dwnstrm'
     env_classification: 'Unclassified'
-    env_label: '{{ dns_name | upper }} - {{ env_classification }} - RogueThink Lab (Master/Upstream)'
-    env_colorbar: '#11f08b'
+    env_label: '{{ dns_name | upper }} - {{ env_classification }} - 8-Ball Lab (Downstream)'
+    env_colorbar: '#fc3503'
     frmn_host: "foreman.{{ dns_name }}"
     frmn_url: "https://{{ frmn_host }}"
     frmn_content_view: "APE_Content_View"
@@ -84,8 +86,8 @@ all:
     frmn_import_stg_source: "{{ frmn_export_stg_target }}"
     frmn_import_stg_target: "/opt/pulp/imports/{{ frmn_content_view }}/"
     frmn_import_stg_version_num: "1.0"
-    frmn_import_stg_tsfolder: "placeholder_folder_name"
-    frmn_import_stg_metadata_filename: "placeholder.json"
+    frmn_import_stg_tsfolder: "2024-08-27T15-03-57-00-00"
+    frmn_import_stg_metadata_filename: "metadata.json"
     local_dnf_repo: "ape-platform-local-repo"
     skip_frmn_register: false
     # skip_frmn_repo_sync: false
@@ -95,8 +97,8 @@ all:
     # skip_frmn_import: true
     kvm_list:
       - {name: "ipa1",       ip_addr: "192.168.122.40", enabled: true,  roles: ["ipa_host",                  ], cpus: 2, ram_mb: 4096, iso: "ipa-server"}
-      - {name: "foreman",    ip_addr: "192.168.122.44", enabled: true,  roles: ["foreman_host",  "ipa_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman", net2: "br0", ip_addr2: "10.40.49.198"}
-      - {name: "mirror-reg", ip_addr: "192.168.122.45", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '180G', iso: "registry"}
-      - {name: "logger",     ip_addr: "192.168.122.41", enabled: false, roles: ["logger_host",   "ipa_client"]}
+      - {name: "foreman",    ip_addr: "192.168.122.44", enabled: true,  roles: ["foreman_host",  "ipa_client"], cpus: 4, ram_mb: 20480, rt_disk: '250G', var_part: 124000, iso: "foreman"}
+      - {name: "mirror-reg", ip_addr: "192.168.122.45", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '180G', var_part: 81920, iso: "registry"}
+      - {name: "logger",     ip_addr: "192.168.122.41", enabled: true,  roles: ["logger_host",   "ipa_client"]}
       - {name: "tang",       ip_addr: "192.168.122.71", enabled: false, roles: ["tang_host",     "ipa_client", "logger_client"], ram_mb: 3072}
       - {name: "vault",      ip_addr: "192.168.122.72", enabled: false, roles: ["vault_host",    "ipa_client", "logger_client"]}

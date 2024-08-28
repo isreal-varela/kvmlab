@@ -1,0 +1,95 @@
+# file: hosts/sully.yml
+
+tang_host:
+
+ipa_host:
+  vars:
+    ipaadmin_password: "{{ vault_ipa_ipaadmin_pwd }}"
+    ipadm_password: "{{ vault_ipa_ipadm_pwd }}"
+    ipaserver_domain: "{{ dns_name }}"
+    ipaserver_realm: "{{ dns_name | upper }}"
+    ipaserver_no_host_dns: true
+    ipaserver_setup_dns: true
+    ipaserver_setup_kra: true
+    ipaserver_no_hbac_allow: true
+    #ipaserver_forwarders: '10.40.49.21,10.40.49.22'
+    ipaserver_no_forwarders: true
+    ipaserver_setup_ca: true
+    ipaserver_hostname: "ipa1.{{ dns_name}}"
+
+ipa_client:
+  vars:
+    ipaadmin_principal: admin
+    ipaadmin_password: "{{ vault_ipa_ipaadmin_pwd }}"
+    ipaclient_domain: "{{ dns_name }}"
+    ipaclient_cleanup_dns_resolver: true
+    ipaclient_mkhomedir: true
+    ipaclient_ntp_servers: 192.168.122.40
+    ipaclient_ssh_trust_dns: true
+    ipasssd_enable_dns_updates: true
+    ipaclient_configure_dns_resolver: true
+    ipaclient_dns_servers: 192.168.122.40
+    ipaclient_force_join: true
+
+logger_client:
+
+#nbde_servers:
+#nbde_clients:
+
+foreman_host:
+  hosts:
+    george
+  vars:
+    is_upstream: true
+
+registry_host:
+  # hosts:
+  #   mirror-reg
+
+kvms:
+  vars:
+    ansible_connection: ssh
+
+# containers:
+#   vars:
+#     ansible_connection: podman
+#     ansible_python_interpreter: auto_silent
+#   children:
+
+all:
+  vars:
+
+    # Various default network configuration settings (some from group_vars/ipa* files)
+    vm_net: br_int
+    net: br_int
+    gateway: 192.168.122.1
+    gateway2: 10.40.49.1
+    dns1:  10.40.49.21
+    dns2: 10.40.49.22
+
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    dns_name: 'ape.sully'
+    dns_search: 'ape.sully'
+    env_classification: 'Unclassified'
+    env_label: '{{ dns_name | upper }} - {{ env_classification }} - 8-Ball Lab (Upstream)'
+    env_colorbar: '#11f08b'
+    frmn_host: "george.{{ dns_name }}"
+    frmn_url: "https://{{ frmn_host }}"
+    frmn_content_view: "APE_Content_View"
+    frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/{{ frmn_content_view }}/"
+    frmn_export_stg_target: "/srv/content_view/"
+    frmn_import_stg_source: "{{ frmn_export_stg_target }}"
+    frmn_import_stg_target: "/opt/pulp/imports/{{ frmn_content_view }}/"
+    frmn_import_stg_version_num: "1.0"
+    frmn_import_stg_tsfolder: "placeholder_folder_name"
+    frmn_import_stg_metadata_filename: "placeholder.json"
+    local_dnf_repo: "ape-platform-local-repo"
+    skip_frmn_register: false
+    # skip_frmn_repo_sync: false
+    # skip_frmn_export: false
+    # skip_frmn_fetch: false
+    # skip_frmn_stage: true
+    # skip_frmn_import: true
+    kvm_list:
+      - {name: "george",    ip_addr: "192.168.122.30", enabled: true,   roles: ["foreman_host"], cpus: 4, ram_mb: 20480, rt_disk: '240G', var_part: 124000, iso: "foreman", net2: "br0", ip_addr2: "10.40.49.198"}

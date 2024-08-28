@@ -73,6 +73,7 @@
         vm_vcpus: "{{ item.cpus | default(vcpus) }}"
         vm_ram_mb: "{{ item.ram_mb | default(ram_mb) }}"
         vm_root_disk: "{{ item.rt_disk | default(vm_disk) }}"
+        vm_var_part: "{{ item.var_part | default(0) }}"
         vm_net: "{{ item.net | default(net) }}"
         vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_net2: "{{ item.net2 | default() }}"

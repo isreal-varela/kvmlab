@@ -28,7 +28,7 @@
     #    un-registered host
     - name: "Generate host-registration command"
       ansible.builtin.shell:
-        hammer -c "{{ frmn_hmr_cfg_file }}" host-registration generate-command --activation-keys "{{ frmn_act_key }}"
+        hammer -c "{{ frmn_hmr_cfg_file }}" host-registration generate-command --force=true --activation-keys "{{ frmn_act_key }}"
       register: frmn_reg_cmd
       when:
         - not skip_frmn_register

@@ -7,6 +7,10 @@ growpart:
 
 runcmd:
   - pvresize /dev/vda2
+{% if ( vm_var_part is defined and vm_var_part != 0 ) %}
+  - lvextend -L {{ vm_var_part }} rl/var
+  - xfs_growfs /dev/mapper/rl-var
+{% endif %}
   - lvextend -l +100%FREE rl/root
   - xfs_growfs /dev/mapper/rl-root
 

@@ -182,7 +182,7 @@
   
   # ---------------------------------------------------------------------------
 
-  - name: Execute all Foreamn product-repo synchronizations
+  - name: Execute all Foreman product-repo synchronizations
     block:
 
       - name: "Sync Rocky 9 repositories"

@@ -46,23 +46,34 @@
     become: true
     block:
 
-    - name: "Upload/stage exported foreman content for import"
-      ansible.builtin.copy:
-        src: "{{ frmn_import_stg_source }}"
-        dest: "{{ frmn_import_stg_target }}"
+    - name: "RSYNC to upload/stage importable artifacts"
+      ansible.posix.synchronize: 
+        mode: push
+        src: "{{ frmn_import_stg_source }}/{{ frmn_content_view }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/"
+        dest: '{{ frmn_import_stg_target }}'
+        recursive: true
+        private_key: /srv/keys/vm_key
+        verify_host: false
+        use_ssh_args: true
+      tags: frmn_downstream_upload
+      vars:
+        ansible_ssh_user: ansible
+
+    - name: "Recursively change ownership uploaded/staged exported foreman content for import"
+      ansible.builtin.file:
+        path: '{{ frmn_import_stg_target }}'
+        state: directory
+        recurse: yes
         owner: pulp
         group: pulp
-        mode: 0775
-      tags:
-        - frmn_downstream_upload
-        - frmn_downstream_import
+      tags: frmn_downstream_upload
 
     - name: "Execute import of staged foreman content view"
       ansible.builtin.shell: |
         hammer -c "{{ frmn_hmr_cfg_file }}" content-import version \
                --organization='Default Organization' \
-               --path={{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }} \
-               --metadata-file={{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/metadata.json
+               --path={{ frmn_import_stg_target }} \
+               --metadata-file={{ frmn_import_stg_target }}//metadata.json
       tags: frmn_downstream_import
 
   # End of "become" block
@@ -81,6 +92,7 @@
         - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_BaseOS_Repo",                    override: enabled }
         - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_AppStream_Repo",                 override: enabled }
         - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_extras_Repo",                    override: enabled }
+        - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_CRB_Repo",                       override: enabled }
         - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_client_latest_Repo",        override: enabled }
         - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_katello_4_13_katello_Repo", override: enabled }
         - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_releases_latest_Repo",      override: enabled }
@@ -115,9 +127,9 @@
     ansible.builtin.shell: |
       hammer -c "{{ frmn_hmr_cfg_file }}" scap-content bulk-upload --type 'directory' --directory /usr/share/xml/scap/ssg/content --organization "{{ frmn_org }}" --location "{{ frmn_loc }}"
     register: hammer_out
-    failed_when:
-      - ( hammer_out.rc != 0 )
-      - ( hammer_out.rc != 65 )
+    failed_when: ( not ( hammer_out.rc in [ 0, 65 ] ) )
+      # - ( hammer_out.rc != 0 )
+      # - ( hammer_out.rc != 65 )
     tags: frmn_downstream_config
 
   - name: "Query for policy"
@@ -137,8 +149,7 @@
     when: ( frmn_policy_exists == false )
     register: hammer_out
     failed_when:
-      - ( hammer_out.rc != 0 )
-      - ( hammer_out.rc != 65 )
+      - ( not ( hammer_out.rc in [ 0, 65 ] ) )
       - '"Name has already been taken" not in hammer_out.stdout'
     tags: frmn_downstream_config
 
@@ -148,8 +159,7 @@
     when: ( frmn_policy_exists == true )
     register: hammer_out
     failed_when:
-      - ( hammer_out.rc != 0 )
-      - ( hammer_out.rc != 65 )
+      - ( not ( hammer_out.rc in [ 0, 65 ] ) )
       - '"Name has already been taken" not in hammer_out.stdout'
     tags: frmn_downstream_config
 
