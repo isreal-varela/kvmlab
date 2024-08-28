@@ -1,4 +1,4 @@
-# file: hosts/ivsbox.yml
+# file: hosts/sully.yml
 
 tang_host:
 
@@ -12,11 +12,10 @@ ipa_host:
     ipaserver_setup_dns: true
     ipaserver_setup_kra: true
     ipaserver_no_hbac_allow: true
-    ipaserver_forwarders: 192.168.100.2
+    #ipaserver_forwarders: '10.40.49.21,10.40.49.22'
+    ipaserver_no_forwarders: true
     ipaserver_setup_ca: true
-    ipaserver_hostname: "ipa1.{{ dns_name }}"
-  hosts:
-    ipasbx
+    ipaserver_hostname: "ipa1.{{ dns_name}}"
 
 ipa_client:
   vars:
@@ -25,11 +24,11 @@ ipa_client:
     ipaclient_domain: "{{ dns_name }}"
     ipaclient_cleanup_dns_resolver: true
     ipaclient_mkhomedir: true
-    ipaclient_ntp_servers: 192.168.100.40
+    ipaclient_ntp_servers: 192.168.122.40
     ipaclient_ssh_trust_dns: true
     ipasssd_enable_dns_updates: true
     ipaclient_configure_dns_resolver: true
-    ipaclient_dns_servers: 192.168.100.40
+    ipaclient_dns_servers: 192.168.122.40
     ipaclient_force_join: true
 
 logger_client:
@@ -39,13 +38,13 @@ logger_client:
 
 foreman_host:
   hosts:
-    georgesbx
+    george
   vars:
-    is_upstream: false
+    is_upstream: true
 
 registry_host:
-  hosts:
-    mrsbx
+  # hosts:
+  #   mirror-reg
 
 kvms:
   vars:
@@ -59,19 +58,28 @@ kvms:
 
 all:
   vars:
+
+    # Various default network configuration settings (some from group_vars/ipa* files)
+    vm_net: br_int
+    net: br_int
+    gateway: 192.168.122.1
+    gateway2: 10.40.49.1
+    dns1:  10.40.49.21
+    dns2: 10.40.49.22
+
     ansible_python_interpreter: /usr/bin/python3
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-    dns_name: 'ape.sbox'
-    dns_search: 'ape.sbox'
+    dns_name: 'ape.sully'
+    dns_search: 'ape.sully'
     env_classification: 'Unclassified'
-    env_label: '{{ dns_name | upper }} - {{ env_classification }} - RogueThink Lab (Downstream)'
-    env_colorbar: '#fcff33'
-    frmn_host: "georgesbx.{{ dns_name }}"
+    env_label: '{{ dns_name | upper }} - {{ env_classification }} - 8-Ball Lab (Upstream)'
+    env_colorbar: '#11f08b'
+    frmn_host: "george.{{ dns_name }}"
     frmn_url: "https://{{ frmn_host }}"
     frmn_content_view: "APE_Content_View"
     frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/{{ frmn_content_view }}/"
-    frmn_export_stg_target: "/srv/content_view/{{ frmn_content_view }}/"
-    frmn_import_stg_source: "/srv/content_view/{{ frmn_content_view }}/"
+    frmn_export_stg_target: "/srv/content_view/"
+    frmn_import_stg_source: "{{ frmn_export_stg_target }}"
     frmn_import_stg_target: "/opt/pulp/imports/{{ frmn_content_view }}/"
     frmn_import_stg_version_num: "1.0"
     frmn_import_stg_tsfolder: "placeholder_folder_name"
@@ -79,13 +87,9 @@ all:
     local_dnf_repo: "ape-platform-local-repo"
     skip_frmn_register: false
     # skip_frmn_repo_sync: false
-    # skip_frmn_export: true
-    # skip_frmn_fetch: true
-    # skip_frmn_stage: false
-    # skip_frmn_import: false
+    # skip_frmn_export: false
+    # skip_frmn_fetch: false
+    # skip_frmn_stage: true
+    # skip_frmn_import: true
     kvm_list:
-      - {name: "ipasbx",     ip_addr: "192.168.100.51", enabled: true,  roles: ["ipa_host",                    "logger_client"], cpus: 2, ram_mb: 2048, iso: "ipa-server"}
-      - {name: "georgesbx",  ip_addr: "192.168.100.52", enabled: true,  roles: ["foreman_host",  "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480, rt_disk: '180G', iso: "foreman"}
-      - {name: "logger",     ip_addr: "192.168.100.53", enabled: true,  roles: ["logger_host",   "ipa_client"]}
-      - {name: "mrsbx",      ip_addr: "192.168.100.54", enabled: true,  roles: ["registry_host", "ipa_client", "logger_client"], ram_mb: 3072, rt_disk: '180G'}
-
+      - {name: "george",    ip_addr: "192.168.122.30", enabled: true,   roles: ["foreman_host"], cpus: 4, ram_mb: 20480, rt_disk: '240G', var_part: 124000, iso: "foreman", net2: "br0", ip_addr2: "10.40.49.198"}

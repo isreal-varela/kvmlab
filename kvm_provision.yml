@@ -6,26 +6,66 @@
   vars:
     vcpus: 2
     ram_mb: 2048
-    net: br0
+    # net: br0
     # dns_name: ape.test
 
   tasks:
 
+    ## BeetleD -- Test retrieving FQDN for a specific role -- START
+    # Check whether "foreman_host" is specified or can be determined
+    - name: Set default value for 'foreman_host_specified'
+      ansible.builtin.set_fact:
+        foreman_host_specified: false
+      tags: always
+    - name: Change value for 'foreman_host_specified' based on 'kvm_list' configuration
+      ansible.builtin.set_fact:
+        foreman_host_specified: true
+      when:
+        - not foreman_host_specified
+        - ( kvm_list | selectattr( 'roles', 'search', 'foreman_host' ) | length ) > 0
+      tags: always
+    - name: Change value for 'foreman_host_specified' based on inventory
+      ansible.builtin.set_fact:
+        foreman_host_specified: true
+      when:
+        - not foreman_host_specified
+        - ( groups['foreman_host']  | default({}) | length ) > 0
+      tags: always
+
+    # Check whether "ipa_host" is specified or can be determined
+    - name: Set default value for 'ipa_host_specified'
+      ansible.builtin.set_fact:
+        ipa_host_specified: false
+      tags: always
+    - name: Change value for 'ipa_host_specified' based on 'kvm_list' configuration
+      ansible.builtin.set_fact:
+        ipa_host_specified: true
+      when: ( kvm_list | selectattr( 'roles', 'search', 'ipa_host' ) | length ) > 0
+      tags: always
+    - name: Change value for 'ipa_host_specified' based on inventory
+      ansible.builtin.set_fact:
+        ipa_host_specified: true
+      when:
+        - not ipa_host_specified
+        - ( groups['ipa_host'] | default({}) | length ) > 0
+      tags: always
+    ## BeetleD -- Test retrieving FQDN for a specific role -- END
+
     - name: Add/update full KVM host /etc/hosts file entries
-      lineinfile:
+      ansible.builtin.lineinfile:
         dest: /etc/hosts
         regexp: '{{ item.name }}.{{ dns_name }}'
         line: '{{ item.ip_addr | default(ip_addr) }}   {{ item.name }}.{{ dns_name }} {{ item.name }}'
         state: present
       become: true
       with_items:
-        - '{{ kvm_list | selectattr("enabled") | list }}'
+      - '{{ kvm_list | selectattr("enabled") | list }}'
       tags:
-        - kvm_prov
-        - kvm_pre_cfg
+      - kvm_prov
+      - kvm_pre_cfg
 
     - name: KVM Provision role
-      include_role:
+      ansible.builtin.include_role:
         name: kvm_provision
       vars:
         vm_item_name: "{{ item.name }}"
@@ -33,63 +73,66 @@
         vm_vcpus: "{{ item.cpus | default(vcpus) }}"
         vm_ram_mb: "{{ item.ram_mb | default(ram_mb) }}"
         vm_root_disk: "{{ item.rt_disk | default(vm_disk) }}"
+        vm_var_part: "{{ item.var_part | default(0) }}"
         vm_net: "{{ item.net | default(net) }}"
+        vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
+        vm_net2: "{{ item.net2 | default() }}"
+        vm_ip_addr2: "{{ item.ip_addr2 | default() }}"
         vm_iso: "{{ item.iso | default() }}"
         cleanup_tmp: "{{ cleanup }}"
-        vm_ip_addr: "{{ item.ip_addr | default(ip_addr) }}"
         vm_roles: "{{ item.roles | default([]) }}"
         cloud_init_user_data: "{{ libvirt_pool_dir }}/{{ item.name }}/user-data"
         cloud_init_meta_data: "{{ libvirt_pool_dir }}/{{ item.name }}/meta-data"
         cloud_init_network_config: "{{ libvirt_pool_dir }}/{{ item.name }}/network-config"
       with_items:
-        - '{{ kvm_list | selectattr("enabled") | list }}'
+      - '{{ kvm_list | selectattr("enabled") | list }}'
       tags:
-        - kvm_prov
-        - kvm_pre_cfg
+      - kvm_prov
+      - kvm_pre_cfg
 
 - name: Include a play for generic KVM "PRE" configuration
   ansible.builtin.import_playbook: kvm_gen_pre.yml
   tags:
-    - kvm_pre_cfg
+  - kvm_pre_cfg
 
 - name: Include a play for NBDE Servers/clients
   ansible.builtin.import_playbook: nbde.yml
   tags:
-    - nbde_cfg
+  - nbde_cfg
 
 - name: Include a play for IPA Server/Client
   become: true
   ansible.builtin.import_playbook: ipa.yml
   tags:
-    - ipa_cfg
+  - ipa_cfg
 
 - name: Include a play for Foreman
   ansible.builtin.import_playbook: foreman.yml
   tags:
-    - foreman_cfg
+  - foreman_cfg
 
 - name: Include a play for Mirror-Registry
   ansible.builtin.import_playbook: registry.yml
   tags:
-    - mirror-reg_cfg
+  - mirror-reg_cfg
 
 - name: Include a play for Hashicorp Vault
   ansible.builtin.import_playbook: vault.yml
   tags:
-    - vault_cfg
+  - vault_cfg
 
-- name: Include a play for Syslog Servers/Clients 
+- name: Include a play for Syslog Servers/Clients
   ansible.builtin.import_playbook: logging.yml
   tags:
-    - logger_cfg
+  - logger_cfg
 
 - name: Include "miscellaneous" tasks
   ansible.builtin.import_playbook: misc.yml
   tags:
-    - misc_cfg
-    - kvm_post_cfg
+  - misc_cfg
+  - kvm_post_cfg
 
 - name: Include a play for generic KVM "POST" configuration
   ansible.builtin.import_playbook: kvm_gen_post.yml
   tags:
-    - kvm_post_cfg
+  - kvm_post_cfg

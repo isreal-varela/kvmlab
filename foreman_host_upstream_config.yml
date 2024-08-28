@@ -1,6 +1,15 @@
 ---
 
   # ---------------------------------------------------------------------------
+  #  Revise "ansible" user group membership to allow writing to "pulp" folders
+  - name: Add "ansible" user to "pulp" group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: pulp
+      append: yes
+    become: true
+
+  # ---------------------------------------------------------------------------
   #  Add/Update Foreman configurations
 
   # ---------------------------------------------------------------------------
@@ -17,6 +26,7 @@
       password: "{{ frmn_pwd }}"
       validate_certs: "{{ frmn_validate_cert }}"
       state: present
+    tags: frmn_upstream_config
 
   # ---------------------------------------------------------------------------
   - name: "Create or update lifecycle env"
@@ -30,315 +40,360 @@
       server_url: "{{ frmn_url }}"
       validate_certs: "{{ frmn_validate_cert }}"
       state: present
+    tags: frmn_upstream_config
 
   # ---------------------------------------------------------------------------
   #  Misc. settings
   - name: "Change Settings"
-    shell: |
+    ansible.builtin.shell: |
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name instance_title --value "{{ env_label }}"
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name instance_color --value "{{ env_colorbar }}"
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name remote_execution_ssh_user --value "ansible"
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name ansible_ssh_private_key_file --value "/usr/share/foreman-proxy/.ssh/id_rsa_foreman_proxy"
       hammer -c "{{ frmn_hmr_cfg_file }}" settings set --name pulpcore_export_destination --value "/opt/pulp/exports"
-    # failed_when: false
+    tags: frmn_upstream_config
 
-    # ---------------------------------------------------------------------------
-    #  Product and Repository object configuration
+  # ---------------------------------------------------------------------------
+  #  Product and Repository object configuration
 
-    # == Rocky repo related objects ##
+  # == Rocky repo related objects ##
 
-    - name: "Create or update Rocky 9 Product"
-      theforeman.foreman.product:
-        name: "Rocky9 Product"
-        organization: "{{ frmn_org }}"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
+  - name: "Create or update Rocky 9 Product"
+    theforeman.foreman.product:
+      name: "Rocky9 Product"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    tags: frmn_upstream_config
 
-    - name: "Create or update Rocky repositories"
-      theforeman.foreman.repository:
-        name: "Rocky 9 - {{ item }} Repo"
-        content_type: "yum"
-        product: "Rocky9 Product"
-        organization: "{{ frmn_org }}"
-        url: "http://dl.rockylinux.org/pub/rocky/9/{{ item }}/x86_64/os/"
-        # mirror_on_sync: true
-        mirroring_policy: mirror_content_only
-        download_policy: immediate
-        os_versions: []
-        arch: "x86_64"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
-      with_items:
-        - BaseOS
-        - AppStream
-        - extras
+  - name: "Create or update Rocky repositories"
+    theforeman.foreman.repository:
+      name: "Rocky 9 - {{ item }} Repo"
+      content_type: "yum"
+      product: "Rocky9 Product"
+      organization: "{{ frmn_org }}"
+      url: "http://dl.rockylinux.org/pub/rocky/9/{{ item }}/x86_64/os/"
+      # mirror_on_sync: true
+      mirroring_policy: mirror_content_only
+      download_policy: immediate
+      os_versions: []
+      arch: "x86_64"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    with_items:
+      - BaseOS
+      - AppStream
+      - extras
+      - CRB
+    tags: frmn_upstream_config
 
-    - name: "Sync Rocky 9 repositories"
-      theforeman.foreman.repository_sync:
-        repository: "Rocky 9 - {{ item }} Repo"
-        product: "Rocky9 Product"
-        organization: "{{ frmn_org }}"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-      with_items:
-        - BaseOS
-        - AppStream
-        - extras
-      # when: ( run_sync | default( false ) )
+  # == EPEL repo related objects
 
-    # == EPEL repo related objects
+  - name: "Create or update EPEL Product"
+    theforeman.foreman.product:
+      name: "EPEL Product"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    tags: frmn_upstream_config
 
-    - name: "Create or update EPEL Product"
-      theforeman.foreman.product:
-        name: "EPEL Product"
-        organization: "{{ frmn_org }}"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
+  - name: "Create or update EPEL repository"
+    theforeman.foreman.repository:
+      name: "EPEL9 Repo"
+      content_type: "yum"
+      product: "EPEL Product"
+      organization: "{{ frmn_org }}"
+      url: "https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/"
+      # mirror_on_sync: true
+      mirroring_policy: mirror_content_only
+      download_policy: immediate
+      os_versions: []
+      arch: "x86_64"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    tags: frmn_upstream_config
 
-    - name: "Create or update EPEL repository"
-      theforeman.foreman.repository:
-        name: "EPEL9 Repo"
-        content_type: "yum"
-        product: "EPEL Product"
-        organization: "{{ frmn_org }}"
-        url: "https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/"
-        # mirror_on_sync: true
-        mirroring_policy: mirror_content_only
-        download_policy: immediate
-        os_versions: []
-        arch: "x86_64"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
+  # == Foreman repo related objects
 
-    - name: "Sync EPEL9 repository"
-      theforeman.foreman.repository_sync:
-        repository: "EPEL9 Repo"
-        product: "EPEL Product"
-        organization: "{{ frmn_org }}"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        server_url: "{{ frmn_url }}"
+  - name: "Create or update Foreman Product"
+    theforeman.foreman.product:
+      name: "Foreman Product"
+      organization: "{{ frmn_org }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    tags: frmn_upstream_config
 
-    # == Foreman repo related objects
+  - name: "Create or update Foreman repositories"
+    theforeman.foreman.repository:
+      name: "Foreman EL9 - {{ item }} Repo"
+      content_type: "yum"
+      product: "Foreman Product"
+      organization: "{{ frmn_org }}"
+      url: "http://yum.theforeman.org/{{ item }}/el9/x86_64/"
+      # mirror_on_sync: true
+      mirroring_policy: mirror_content_only
+      download_policy: immediate
+      os_versions: []
+      arch: "x86_64"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    with_items:
+      - client/latest
+      - releases/latest
+      - katello/4.13/katello
+    tags: frmn_upstream_config
 
-    - name: "Create or update Foreman Product"
-      theforeman.foreman.product:
-        name: "Foreman Product"
-        organization: "{{ frmn_org }}"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
-
-    - name: "Create or update Foreman repositories"
-      theforeman.foreman.repository:
-        name: "Foreman EL9 - {{ item }} Repo"
-        content_type: "yum"
-        product: "Foreman Product"
-        organization: "{{ frmn_org }}"
-        url: "http://yum.theforeman.org/{{ item }}/el9/x86_64/"
-        # mirror_on_sync: true
-        mirroring_policy: mirror_content_only
-        download_policy: immediate
-        os_versions: []
-        arch: "x86_64"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
-      with_items:
-        - client/latest
-        - releases/latest
-        - katello/4.13/katello
-
-    - name: "Sync Foreman repositories"
-      theforeman.foreman.repository_sync:
-        repository: "Foreman EL9 - {{ item }} Repo"
-        product: "Foreman Product"
-        organization: "{{ frmn_org }}"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        server_url: "{{ frmn_url }}"
-      with_items:
-        - client/latest
-        - releases/latest
-        - katello/4.13/katello
-
-    # == Sync related objects ##
-    - name: "Create or update sync plan"
-      theforeman.foreman.sync_plan:
-        name: "{{ frmn_gen_name }} Sync Plan"
-        organization: "{{ frmn_org }}"
-        interval: "daily"
-        enabled: true
-        sync_date: "2024-06-01 00:00:00 UTC"
-        products:
-          - 'Rocky9 Product'
-          - 'Foreman Product'
-          - 'EPEL Product'
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
-
-    # ---------------------------------------------------------------------------
-
-    - name: "Create or update content view"
-      theforeman.foreman.content_view:
-        name: "APE Content View"
-        organization: "{{ frmn_org }}"
-        repositories:
-          - { name: "Rocky 9 - BaseOS Repo",    product: "Rocky9 Product" }
-          - { name: "Rocky 9 - AppStream Repo", product: "Rocky9 Product" }
-          - { name: "Rocky 9 - extras Repo",    product: "Rocky9 Product" }
-          - { name: "EPEL9 Repo",    product: "EPEL Product" }
-          - { name: "Foreman EL9 - client/latest Repo",        product: "Foreman Product" }
-          - { name: "Foreman EL9 - releases/latest Repo",      product: "Foreman Product" }
-          - { name: "Foreman EL9 - katello/4.13/katello Repo", product: "Foreman Product" }
-        solve_dependencies: true
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
-
-    - name: "Ensure content view v1.0 is published into lab"
-      theforeman.foreman.content_view_version:
-        content_view: "APE Content View"
-        organization: "{{ frmn_org }}"
-        version: "1.0"
-        lifecycle_environments:
-          - "{{ frmn_lce }}"
-          - "Library"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
-
-    # ---------------------------------------------------------------------------
-
-    - name: "Create or update client activation key"
-      theforeman.foreman.activation_key:
-        name: "{{ frmn_act_key }}"
-        organization: "{{ frmn_org }}"
-        lifecycle_environment: "{{ frmn_lce }}"
-        content_view: "APE Content View"
-        content_overrides:
-          - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_BaseOS_Repo",                    override: enabled }
-          - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_AppStream_Repo",                 override: enabled }
-          - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_extras_Repo",                    override: enabled }
-          - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_client_latest_Repo",        override: enabled }
-          - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_katello_4_13_katello_Repo", override: enabled }
-          - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_releases_latest_Repo",      override: enabled }
-          - { label: "Default_Organization_EPEL_Product_EPEL9_Repo",                                 override: enabled }
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
-
-    # ---------------------------------------------------------------------------
-
-    - name: "Create or update APE hostgroup"
-      theforeman.foreman.hostgroup:
-        name: "{{ frmn_hostgroup_name }}"
-        organization: "{{ frmn_org }}"
-        locations: "{{ frmn_loc }}"
-        domain: "{{ dns_name }}"
-        architecture: "x86_64"
-        operatingsystem: "Rocky Linux 9.4"
-        lifecycle_environment: "{{ frmn_lce }}"
-        content_view: "APE Content View"
-        openscap_proxy: "{{ frmn_host }}"
-        activation_keys: "{{ frmn_act_key }}"
-        username: "{{ frmn_usr }}"
-        password: "{{ frmn_pwd }}"
-        server_url: "{{ frmn_url }}"
-        validate_certs: "{{ frmn_validate_cert }}"
-        state: present
-
-    # ---------------------------------------------------------------------------
-
-    - name: "Bulk upload OpenSCAP content"
-      shell: |
-        hammer -c "{{ frmn_hmr_cfg_file }}" scap-content bulk-upload --type 'directory' --directory /usr/share/xml/scap/ssg/content --organization "{{ frmn_org }}" --location "{{ frmn_loc }}"
-      register: hammer_out
-      failed_when:
-        - ( hammer_out.rc != 0 )
-        - ( hammer_out.rc != 65 )
-
-    # ---------------------------------------------------------------------------
-    - name: "Query for policy"
-      shell: |
-        hammer -c "{{ frmn_hmr_cfg_file }}" --output json policy info --name '{{ frmn_gen_name }} Policy' | jq '.Id'
-      register: hammer_qry
-      failed_when: false
-    - name: "Set frmn_policy_exists fact"
-      set_fact:
-        frmn_policy_exists: "{% if ( hammer_qry.rc != 0 ) or ( hammer_qry.stdout == '' ) %}false{% else %}true{% endif %}"
-
-    - name: "Create policy"
-      shell: |
-        hammer -c "{{ frmn_hmr_cfg_file }}" policy create --name "{{ frmn_gen_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
-      when: ( frmn_policy_exists == false )
-      register: hammer_out
-      failed_when:
-        - ( hammer_out.rc != 0 )
-        - ( hammer_out.rc != 65 )
-        - '"Name has already been taken" not in hammer_out.stdout'
-
-    - name: "Update policy"
-      shell: |
-        hammer -c "{{ frmn_hmr_cfg_file }}" policy update --name "{{ frmn_gen_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
-      when: ( frmn_policy_exists == true )
-      register: hammer_out
-      failed_when:
-        - ( hammer_out.rc != 0 )
-        - ( hammer_out.rc != 65 )
-        - '"Name has already been taken" not in hammer_out.stdout'
-
-    # ---------------------------------------------------------------------------
-    #  Export/prepare importable artifacts for use "downstream"
-    - name: Export/prepare importable artifacts for use "downstream"
-      block:
-
-        - name: "Attempt Content View export"
-          shell: |
-            hammer -c "{{ frmn_hmr_cfg_file }}" content-export complete version \
-                   --content-view='APE Content View' \
-                   --version='1.0' \
-                   --chunk-size-gb=2 \
-                   --organization="Default Organization"
-          register: hammer_out
-        - name: "Debug hammer output"
-          debug:
-            var: hammer_out.stdout
-
-      when: not skip_frmn_export
+  # == Sync related objects ##
+  - name: "Create or update sync plan"
+    theforeman.foreman.sync_plan:
+      name: "{{ frmn_gen_name }} Sync Plan"
+      organization: "{{ frmn_org }}"
+      interval: "daily"
+      enabled: true
+      sync_date: "2024-06-01 00:00:00 UTC"
+      products:
+        - 'Rocky9 Product'
+        - 'Foreman Product'
+        - 'EPEL Product'
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    tags: frmn_upstream_config
   
-    - name: "Fetch importable artifacts for later upload 'downstream'"
-      ansible.builtin.fetch:
-        src: "{{ frmn_export_stg_source }}"
-        dest: "{{ frmn_export_stg_target }}"
-        flat: true
-      when: not skip_frmn_fetch
+  # ---------------------------------------------------------------------------
+
+  - name: Execute all Foreman product-repo synchronizations
+    block:
+
+      - name: "Sync Rocky 9 repositories"
+        theforeman.foreman.repository_sync:
+          repository: "Rocky 9 - {{ item }} Repo"
+          product: "Rocky9 Product"
+          organization: "{{ frmn_org }}"
+          username: "{{ frmn_usr }}"
+          password: "{{ frmn_pwd }}"
+          server_url: "{{ frmn_url }}"
+          validate_certs: "{{ frmn_validate_cert }}"
+        with_items:
+          - BaseOS
+          - AppStream
+          - extras
+          - CRB
+
+      - name: "Sync EPEL9 repository"
+        theforeman.foreman.repository_sync:
+          repository: "EPEL9 Repo"
+          product: "EPEL Product"
+          organization: "{{ frmn_org }}"
+          username: "{{ frmn_usr }}"
+          password: "{{ frmn_pwd }}"
+          server_url: "{{ frmn_url }}"
+          validate_certs: "{{ frmn_validate_cert }}"
+
+      - name: "Sync Foreman repositories"
+        theforeman.foreman.repository_sync:
+          repository: "Foreman EL9 - {{ item }} Repo"
+          product: "Foreman Product"
+          organization: "{{ frmn_org }}"
+          username: "{{ frmn_usr }}"
+          password: "{{ frmn_pwd }}"
+          server_url: "{{ frmn_url }}"
+          validate_certs: "{{ frmn_validate_cert }}"
+        with_items:
+          - client/latest
+          - releases/latest
+          - katello/4.13/katello
+
+    tags: frmn_upstream_sync
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Create or update content view"
+    theforeman.foreman.content_view:
+      name: "{{ frmn_content_view }}"
+      organization: "{{ frmn_org }}"
+      repositories:
+        - { name: "Rocky 9 - BaseOS Repo",    product: "Rocky9 Product" }
+        - { name: "Rocky 9 - AppStream Repo", product: "Rocky9 Product" }
+        - { name: "Rocky 9 - extras Repo",    product: "Rocky9 Product" }
+        - { name: "Rocky 9 - CRB Repo",       product: "Rocky9 Product" }
+        - { name: "EPEL9 Repo",    product: "EPEL Product" }
+        - { name: "Foreman EL9 - client/latest Repo",        product: "Foreman Product" }
+        - { name: "Foreman EL9 - releases/latest Repo",      product: "Foreman Product" }
+        - { name: "Foreman EL9 - katello/4.13/katello Repo", product: "Foreman Product" }
+      solve_dependencies: true
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    tags:
+      - frmn_upstream_config
+      - frmn_upstream_export
+
+  - name: "Ensure content view v1.0 is published into lab"
+    theforeman.foreman.content_view_version:
+      content_view: "{{ frmn_content_view }}"
+      organization: "{{ frmn_org }}"
+      version: "1.0"
+      lifecycle_environments:
+        - "{{ frmn_lce }}"
+        - "Library"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    tags: frmn_upstream_config
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Create or update client activation key"
+    theforeman.foreman.activation_key:
+      name: "{{ frmn_act_key }}"
+      organization: "{{ frmn_org }}"
+      lifecycle_environment: "{{ frmn_lce }}"
+      content_view: "{{ frmn_content_view }}"
+      content_overrides:
+        - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_BaseOS_Repo",                    override: enabled }
+        - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_AppStream_Repo",                 override: enabled }
+        - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_extras_Repo",                    override: enabled }
+        - { label: "Default_Organization_Rocky9_Product_Rocky_9_-_CRB_Repo",                       override: enabled }
+        - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_client_latest_Repo",        override: enabled }
+        - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_katello_4_13_katello_Repo", override: enabled }
+        - { label: "Default_Organization_Foreman_Product_Foreman_EL9_-_releases_latest_Repo",      override: enabled }
+        - { label: "Default_Organization_EPEL_Product_EPEL9_Repo",                                 override: enabled }
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    tags: frmn_upstream_config
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Create or update APE hostgroup"
+    theforeman.foreman.hostgroup:
+      name: "{{ frmn_hostgroup_name }}"
+      organization: "{{ frmn_org }}"
+      locations: "{{ frmn_loc }}"
+      domain: "{{ dns_name }}"
+      architecture: "x86_64"
+      operatingsystem: "Rocky Linux 9.4"
+      lifecycle_environment: "{{ frmn_lce }}"
+      content_view: "{{ frmn_content_view }}"
+      openscap_proxy: "{{ frmn_host }}"
+      activation_keys: "{{ frmn_act_key }}"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    tags: frmn_upstream_config
+
+  # ---------------------------------------------------------------------------
+
+  - name: "Bulk upload OpenSCAP content"
+    ansible.builtin.shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" scap-content bulk-upload --type 'directory' --directory /usr/share/xml/scap/ssg/content --organization "{{ frmn_org }}" --location "{{ frmn_loc }}"
+    register: hammer_out
+    failed_when:
+      - ( hammer_out.rc != 0 )
+      - ( hammer_out.rc != 65 )
+    tags: frmn_upstream_config
+
+  # ---------------------------------------------------------------------------
+  - name: "Query for policy"
+    ansible.builtin.shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" --output json policy info --name '{{ frmn_gen_name }} Policy' | jq '.Id'
+    register: hammer_qry
+    failed_when: false
+  - name: "Set frmn_policy_exists fact"
+    ansible.builtin.set_fact:
+      frmn_policy_exists: "{% if ( hammer_qry.rc != 0 ) or ( hammer_qry.stdout == '' ) %}false{% else %}true{% endif %}"
+    tags: frmn_upstream_config
+
+  - name: "Create policy"
+    ansible.builtin.shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" policy create --name "{{ frmn_gen_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
+    when: ( frmn_policy_exists == false )
+    register: hammer_out
+    failed_when:
+      - ( hammer_out.rc != 0 )
+      - ( hammer_out.rc != 65 )
+      - '"Name has already been taken" not in hammer_out.stdout'
+    tags: frmn_upstream_config
+
+  - name: "Update policy"
+    ansible.builtin.shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" policy update --name "{{ frmn_gen_name }} Policy" --description "Created via Ansible playbook" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroups "{{ frmn_hostgroup_name }}" --period weekly --weekday sunday --scap-content "rl9 content" --scap-content-profile-id 37  --deploy-by ansible
+    when: ( frmn_policy_exists == true )
+    register: hammer_out
+    failed_when:
+      - ( hammer_out.rc != 0 )
+      - ( hammer_out.rc != 65 )
+      - '"Name has already been taken" not in hammer_out.stdout'
+    tags: frmn_upstream_config
+
+  # ---------------------------------------------------------------------------
+  #  Export/prepare importable artifacts for use "downstream"
+  - name: Export/prepare importable artifacts for use "downstream"
+    block:
+
+      - name: "Attempt Content View export"
+        become: true
+        ansible.builtin.shell: |
+          hammer -c "{{ frmn_hmr_cfg_file }}" content-export complete version \
+                 --content-view="{{ frmn_content_view }}" \
+                 --version='1.0' \
+                 --chunk-size-gb=2 \
+                 --organization="Default Organization"
+        register: hammer_out
+      - name: "Debug hammer output"
+        ansible.builtin.debug:
+          var: hammer_out.stdout
+    tags: frmn_upstream_export
+
+  - name: Ensure "fetch" task will have access to read exported files
+    become: true
+    ansible.builtin.file:
+      path: "/opt/pulp/exports"
+      recurse: true
+      mode: 0775
+    tags:
+      - frmn_upstream_export
+      - frmn_upstream_fetch
+
+  - name: "RSYNC to retrieve importable artifacts"
+    delegate_to: localhost
+    ansible.posix.synchronize: 
+      mode: pull
+      src: '{{ frmn_export_stg_source }}'
+      dest: '{{ frmn_export_stg_target }}/{{ frmn_content_view }}/'
+      recursive: true
+      private_key: /srv/keys/vm_key
+      verify_host: false
+      use_ssh_args: true
+    tags: frmn_upstream_fetch
+    vars:
+      ansible_ssh_user: ansible

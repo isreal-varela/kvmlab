@@ -1,5 +1,14 @@
 #!/bin/bash +x
 
+function __usage {
+	echo
+	echo "$(basename $0) <environment name>"
+	echo "  where <environment name> is used to determined the appropriate inventory"
+	echo "    and secrets files used for the playbook execution"
+	echo
+	exit 1
+}
+
 function ensure_dir_exists()
 {
   for dir in "$*"
@@ -14,16 +23,45 @@ function ensure_dir_exists()
   }
 }
 
+test1=$@
+test2=`(echo "$@" | sed -e 's/[!@#$%^&*()~\`<>,\\/:;\|]//g')`
+if [ "${test1}" != "${test2}" ]; then
+	echo "Invalid characters in arguments!"
+	__usage
+fi
+boolParamIssue=0
+
 ensure_dir_exists ${HOME}/.ansible/roles
+
+if ! [ -n "$1" ]; then
+	echo "Environment not specified!"
+	__usage
+	exit 1
+fi
+
+strEnvName=$1
+if ! [ -f ./hosts/$strEnvName.yml ]; then
+	echo "./hosts/${strEnvName}.yml file not found!"
+	boolParamIssue=1
+fi
+if ! [ -f ./secrets/${strEnvName}.yml ]; then
+	echo "./secrets/${strEnvName}.yml file not found!"
+	boolParamIssue=1
+fi
+if [[ boolParamIssue -ne 0 ]]; then
+	__usage
+fi
+
+echo Using the following files:
+echo \- hosts/${strEnvName}.yml for playbook "-i" parameter
+echo \-  secrets/${strEnvName}.yml for playbook extraVars
+echo
 
 ansible-galaxy collection install -r requirements.yml
 ansible-galaxy role       install -r requirements.yml
 #ansible-galaxy collection install containers.podman
+echo
 
-#ansible-playbook kvm_provision.yml
-
-#Uncomment to install additional systems as well
-#ansible-playbook kvm_provision.yml --extra-vars 'vm_name=ipa'
-
-# BeetleD added below
-ansible-playbook -i hosts/ivlab.yml kvm_provision.yml -vv -u ${USER} -e '@./secrets/ivlab.yml' --ask-vault-pass --ask-become-pass --ask-pass
+echo "Command being launched:"
+echo "ansible-playbook -i hosts/${strEnvName}.yml kvm_provision.yml -vv -u ${USER} -e @./secrets/${strEnvName}.yml --ask-vault-pass --ask-become-pass --ask-pass"
+ansible-playbook -i hosts/${strEnvName}.yml kvm_provision.yml -vv -u ${USER} -e @./secrets/${strEnvName}.yml --ask-vault-pass --ask-become-pass --ask-pass

@@ -11,6 +11,7 @@
             dns: "{{ inventory_hostname }}.{{ dns_name }}"
             principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
             ca: ipa
+      when: ( is_upstream == false )
 
 - name: Playbook to install foreman
   hosts: foreman_host
@@ -24,15 +25,6 @@
         recurse: true
         mode: 0775
 
-    - name: Create /home/ansible/stg-repo folder
-      ansible.builtin.file:
-        path: "/home/ansible/stg-repo"
-        owner: ansible
-        group: ansible
-        recurse: true
-        mode: 0770
-      when: not inet_access
-
     - name: Allow incoming traffic to the local host
       ansible.builtin.include_role:
         name: rhel-system-roles.firewall
@@ -40,92 +32,65 @@
         firewall:
           - {zone: public,
              service: [http, https],
-             port: [ '53/udp', '53/tcp', '67/udp', '69/udp', '5647/tcp', '8000/tcp', '8140/tcp', '9090/tcp' ],
+             port: ['53/udp', '53/tcp', '67/udp', '69/udp', '5647/tcp', '8000/tcp', '8140/tcp', '9090/tcp'],
              state: enabled}
 
-    # ---------------------------------------------------------------------------
-    - name: "Tasks specific to a 'master/upstream' Foreman instance"
-      block:
+    - name: Mount the ISO file
+      ansible.builtin.mount:
+        path: "/mnt"
+        src: "/dev/sr1"
+        fstype: "iso9660"
+        boot: false
+        opts: "ro,noauto"
+        state: mounted
 
-      - name: Add Foreman repository
-        ansible.builtin.shell: |
-          sudo dnf -y install https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
-        # ansible.builtin.yum_repository:
-        #   name: foreman
-        #   description: Foreman 3.10
-        #   baseurl: https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
-        #   repo-gpgcheck: true
-        #   state: present
+    - name: "Check that the /etc/yum.repos.d/foreman-local.repo exists"
+      ansible.builtin.stat:
+        path: /etc/yum.repos.d/foreman-local.repo
+      register: repofile_stat_result
 
-      - name: Add Katello repository
-        ansible.builtin.shell: |
-          sudo dnf -y install https://yum.theforeman.org/katello/4.12/katello/el9/x86_64/katello-repos-latest.rpm
-        # ansible.builtin.yum_repository:
-        #   name: foreman
-        #   description: Foreman 3.10
-        #   baseurl: https://yum.theforeman.org/releases/3.10/el9/x86_64/foreman-release.rpm
-        #   repo-gpgcheck: true
-        #   state: present
+    - name: "Upload 'foreman-local.repo' file"
+      ansible.builtin.template:
+        src: foreman-iso.repo.j2
+        dest: "/etc/yum.repos.d/foreman-local.repo"
+      when: not repofile_stat_result.stat.exists
 
-      - name: Add Puppet repository
-        ansible.builtin.shell: |
-          sudo dnf -y install https://yum.puppet.com/puppet7-release-el-9.noarch.rpm
-        # ansible.builtin.yum_repository:
-        #   name: puppet7
-        #   description: Puppet 7 Repository el 8 - x86_64
-        #   baseurl: https://yum.puppet.com/puppet7-release-el-9.noarch.rpm
-        #   repo-gpgcheck: true
-        #   state: present
-
-      when: inet_access
-    # ---------------------------------------------------------------------------
-
-    # ---------------------------------------------------------------------------
-    - name: "Tasks specific to a 'downstream' Foreman instance"
-      block:
-
-      - name: Mount the ISO file
-        ansible.builtin.mount:
-          path: "/mnt"
-          src: "/dev/sr1"
-          fstype: "iso9660"
-          opts: "ro,noauto"
-          state: mounted
-
-      - name: "Check that the /etc/yum.repos.d/foreman-local.repo exists"
-        stat:
-          path: /etc/yum.repos.d/foreman-local.repo
-        register: repofile_stat_result
-
-      - name: "Upload 'foreman-iso.repo' file"
-        template:
-          src: foreman-iso.repo.j2
-          dest: "/etc/yum.repos.d/foreman-local.repo"
-        when: not repofile_stat_result.stat.exists
-
-      - name: Execute dnf update
-        ansible.builtin.shell: |
-          dnf --assumeno --nobest update
-        when: not repofile_stat_result.stat.exists
-        failed_when: false
-
-      when: not inet_access
-    # ---------------------------------------------------------------------------
+    - name: Execute dnf update
+      ansible.builtin.shell: |
+        dnf --assumeno --nobest update
+      when: not repofile_stat_result.stat.exists
+      failed_when: false
 
     - name: Download the foreman-installer-katello
-      # sudo dnf -y install foreman-installer-katello
       ansible.builtin.dnf:
         name: foreman-installer-katello
         state: present
 
     - name: Download the ansiblerole-foreman_scap_client
-      # sudo dnf -y install foreman-installer-katello
       ansible.builtin.dnf:
         name: ansiblerole-foreman_scap_client
         state: present
 
-    - name: Execute foreman-installer
-      # sudo foreman-installer
+    - name: Execute foreman-installer (upstream-only)
+      ansible.builtin.shell: |
+        foreman-installer --scenario katello \
+          --foreman-proxy-content-pulpcore-additional-export-paths /opt/pulp/exports \
+          --foreman-proxy-content-pulpcore-additional-import-paths /opt/pulp/imports \
+          --foreman-initial-admin-first-name='{{ dns_name | upper }}' \
+          --foreman-initial-admin-last-name='Administator' \
+          --foreman-initial-admin-username='admin' \
+          --foreman-initial-admin-password='{{ vault_foreman_admin_pwd }}' \
+          --enable-foreman-compute-libvirt \
+          --enable-foreman-plugin-openscap \
+          --enable-foreman-proxy-plugin-openscap \
+          --enable-foreman-cli-openscap \
+          --enable-foreman-plugin-ansible \
+          --enable-foreman-proxy-plugin-ansible \
+          -l INFO
+      # register: fm_install_rc
+      when: ( is_upstream == true )
+
+    - name: Execute foreman-installer (downstream-only)
       ansible.builtin.shell: |
         foreman-installer --scenario katello \
           --certs-server-cert='/etc/pki/tls/certs/{{ inventory_hostname }}.crt' \
@@ -144,7 +109,8 @@
           --enable-foreman-plugin-ansible \
           --enable-foreman-proxy-plugin-ansible \
           -l INFO
-      register: fm_install_rc
+      # register: fm_install_rc
+      when: ( is_upstream == false )
 
       # HOLDING PEN FOR OTHER POSSIBLE CLI PARAMETERS
       #    --enable-foreman-plugin-remote-execution \
@@ -159,24 +125,15 @@
       #    --foreman-client-cors-domains=
       #  --<many-many-more>
 
+    - name: Disable 'APE Local DNF' repository
+      ansible.builtin.yum_repository:
+        name: '{{ local_dnf_repo }}'
+        baseurl: /mnt
+        enabled: false
+      failed_when: false
 
-    # ---------------------------------------------------------------------------
-    - name: "Cleanup Tasks specific to a 'downsteam' Foreman instance"
-      block:
-
-      - name: Disable 'APE Local DNF' repository
-        ansible.builtin.yum_repository:
-          name: '{{ frmn_local_dnf_repo }}'
-          baseurl: /mnt
-          enabled: false
-        # failed_when: false
-
-      # Unmount ISO as should ONLY be req'd prior to and during "foreman-installer" execution
-      - name: Umount the ISO
-        ansible.builtin.mount:
-          path: /mnt
-          state: unmounted
-
-      # when: not inet_access
-      when: false
-    # ---------------------------------------------------------------------------
+    # Unmount ISO as should ONLY be req'd prior to and during "foreman-installer" execution
+    - name: Unmount the ISO
+      ansible.builtin.mount:
+        path: /mnt
+        state: unmounted

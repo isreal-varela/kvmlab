@@ -2,9 +2,15 @@
 
 function __usage {
 	echo
-	echo "$(basename $0) <kvm name(s)>"
-	echo "  where zero or more valid KVM names are listed as parameters"
-	echo "  if no parameters are passed, the default list as defined"
+	echo "$(basename $0) <environment name> <ipa hostname> [<kvm name(s)]"
+	echo "  where <environment name> is used to determined the appropriate inventory"
+	echo "    and secrets files used for the playbook execution"
+	echo ""
+	echo "  where <ipa hostname> denotes the hostname (short or long) containing the"
+	echo "    FreeIPA instance from which the KVMs should be deleted"
+	echo ""
+	echo "  where, optionally, valid KVM names are listed as parameters"
+	echo "  if no KVM names  are passed, the default list as defined"
 	echo "  within the ansible playbook will be processed."
 	echo
 	exit
@@ -23,11 +29,44 @@ if [ "${test1}" != "${test2}" ]; then
 	exit 1
 fi
 
+strEnvName=$1
+shift 1
+if ! [ -n "$strEnvName" ]; then
+	echo "Environment not specified!"
+	__usage
+	exit 1
+fi
+if ! [ -f ./hosts/$strEnvName.yml ]; then
+	echo "./hosts/${strEnvName}.yml file not found!"
+	boolParamIssue=1
+fi
+if ! [ -f ./secrets/${strEnvName}.yml ]; then
+	echo "./secrets/${strEnvName}.yml file not found!"
+	boolParamIssue=1
+fi
+
+strIPAHost=$1
+shift 1
+if [[ -z "$strIPAHost" ]]; then
+	echo "IPA Host not specified!"
+	boolParamIssue=1
+fi
+
+if [[ boolParamIssue -ne 0 ]]; then
+	__usage
+fi
+
+echo Using the following files:
+echo \- hosts/${strEnvName}.yml for playbook "-i" parameter
+echo \-  secrets/${strEnvName}.yml for playbook extraVars
+echo And IPA Host = "${strIPAHost}"
+echo \- $@
+
 list=$(__join "," $@)
 if [ -z "${list}" ]; then
 	echo Destroy default KVMs
-	ansible-playbook -i hosts/ivlab.yml kvm_remove.yml -vv --ask-become-pass --ask-pass --ask-vault-pass -u ${USER} -e '@./secrets/ivlab.yml' -l localhost,ipa1
+	ansible-playbook -i hosts/${strEnvName}.yml kvm_remove.yml -vv --ask-become-pass --ask-pass --ask-vault-pass -u ${USER} -e @./secrets/${strEnvName}.yml -l localhost,${strIPAHost}
 else
 	echo Destroy specific KVMS: ${list}
-	ansible-playbook -i hosts/ivlab.yml kvm_remove.yml -vv --ask-become-pass --ask-pass --ask-vault-pass -u ${USER} -e '@./secrets/ivlab.yml' -e "vm_name=${list}" -l localhost,ipa1
+	ansible-playbook -i hosts/${strEnvName}.yml kvm_remove.yml -vv --ask-become-pass --ask-pass --ask-vault-pass -u ${USER} -e @./secrets/${strEnvName}.yml -e "vm_name=${list}" -l localhost,${strIPAHost}
 fi

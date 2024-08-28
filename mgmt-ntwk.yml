@@ -1,0 +1,114 @@
+# ansible-playbook -i localhost, --ask-pass --ask-become-pass ./mgmt-ntwk.yml -u ape-admin -vvvv
+---
+
+- name: Introduce bridge network configuration
+  hosts: localhost
+  become: true
+  vars:
+    nmcli_eth_ext:
+      - conn_name: br-ext
+        intfc_name: ens15f0
+        ip4: '10.40.49.199/24'
+        gw4: '10.40.49.1'
+        dns:
+          - '10.40.49.21'
+          - '10.40.49.22'
+    nmcli_eth_int:
+      - conn_name: br-int
+        intfc_name: ens1f0np0
+        ip4: '192.168.100.1/24'
+        gw4: '192.168.100.1'
+        dns:
+          - '192.168.100.40'
+
+  tasks:
+
+    # -- TRIAD ---------------------------------------------
+
+    # Maybe NOT delete the interface
+    - name: Delete external interface
+      community.general.nmcli:
+        conn_name: '{{ item.intfc_name }}'
+        state: absent
+      with_items:
+        - '{{ nmcli_eth_ext }}'
+      tags: br0
+      when: false
+
+    - name: Delete bridge for external connection ({{ nmcli_eth_ext.conn_name }})
+      community.general.nmcli:
+        conn_name: '{{ item.conn_name }}'
+        state: absent
+      with_items:
+        - '{{ nmcli_eth_ext }}'
+      tags: br0
+
+    - name: Add bridge external connection
+      community.general.nmcli:
+        type: ethernet
+        conn_name: '{{ item.conn_name }}'
+        ifname: '{{ item.conn_name }}'
+        ip4: '{{ item.ip4 }}'
+        gw4: '{{ item.gw4 }}'
+        dns4: '{{ item.dns }}'
+        state: present
+      with_items:
+        - '{{ nmcli_eth_ext }}'
+      tags: br0
+
+    - name: Create external interface
+      community.general.nmcli:
+        type: bridge-slave
+        conn_name: '{{ item.intfc_name }}'
+        ifname: '{{ item.intfc_name }}'
+        master: '{{ item.conn_name }}'
+        state: present
+      with_items:
+        - '{{ nmcli_eth_ext }}'
+      tags: br0
+
+    # -- APE -----------------------------------------------
+
+    # Maybe NOT delete the interface
+    - name: Delete internal interface
+      community.general.nmcli:
+        conn_name: '{{ item.intfc_name }}'
+        state: absent
+      with_items:
+        - '{{ nmcli_eth_int }}'
+      tags: br1
+      when: false
+
+    - name: Delete bridge for internal connection ({{ nmcli_eth_int.conn_name }})
+      community.general.nmcli:
+        conn_name: '{{ item.conn_name }}'
+        state: absent
+      with_items:
+        - '{{ nmcli_eth_int }}'
+      tags: br1
+
+    - name: Add bridge internal connection
+      community.general.nmcli:
+        type: ethernet
+        conn_name: '{{ item.conn_name }}'
+        ifname: '{{ item.conn_name }}'
+        ip4: '{{ item.ip4 }}'
+        gw4: '{{ item.gw4 }}'
+        dns4: '{{ item.dns }}'
+        state: present
+      with_items:
+        - '{{ nmcli_eth_int }}'
+      tags: br1
+
+    - name: Create internal interface
+      community.general.nmcli:
+        type: bridge-slave
+        conn_name: '{{ item.intfc_name }}'
+        ifname: '{{ item.intfc_name }}'
+        master: '{{ item.conn_name }}'
+        state: present
+      with_items:
+        - '{{ nmcli_eth_int }}'
+      tags: br1
+
+  tags: ntwk_cfg

@@ -9,30 +9,22 @@
   - name: "Tasks specific to a 'downsteam' IPA server instance"
     block:
 
-    - name: Create /home/ansible/stg-repo folder
-      ansible.builtin.file:
-        path: "/home/ansible/stg-repo"
-        owner: ansible
-        group: ansible
-        recurse: true
-        mode: 0770
-      when: not inet_access
-
     - name: Mount the ISO file
       ansible.builtin.mount:
         path: "/mnt"
         src: "/dev/sr1"
         fstype: "iso9660"
+        boot: false
         opts: "ro,noauto"
         state: mounted
 
     - name: "Check that the /etc/yum.repos.d/ipa-server-local.repo exists"
-      stat:
+      ansible.builtin.stat:
         path: /etc/yum.repos.d/ipa-server-local.repo
       register: repofile_stat_result
 
-    - name: "Upload 'ipa-server-iso.repo' file"
-      template:
+    - name: "Upload 'ipa-server-local.repo' file"
+      ansible.builtin.template:
         src: ipa-server-iso.repo.j2
         dest: "/etc/yum.repos.d/ipa-server-local.repo"
       when: not repofile_stat_result.stat.exists
@@ -43,15 +35,15 @@
       when: not repofile_stat_result.stat.exists
       failed_when: false
 
-    when: not inet_access
+    when: not ( is_upstream | default(false) )
   # ---------------------------------------------------------------------------
 
   - name: Get ethernet interface names to be used later for disabling ipv6
-    shell: "set -o pipefail && nmcli connection show | grep ethernet | awk '{print $1}'"
+    ansible.builtin.shell: "set -o pipefail && nmcli connection show | grep ethernet | awk '{print $1}'"
     changed_when: false
     register: ethernet_interface_name
 
-  - name:  Disable IPv6 in Network Manager for the main ethernet device
+  - name: Disable IPv6 in Network Manager for the main ethernet device
     community.general.nmcli:
       type: ethernet
       conn_name: "{{ item }}"
@@ -77,26 +69,18 @@
 
   tasks:
 
-  # ---------------------------------------------------------------------------
-  - name: "Cleanup Tasks specific to a 'downsteam' IPA server instance"
-    block:
+  - name: Disable 'APE Local DNF' repository
+    ansible.builtin.yum_repository:
+      name: '{{ local_dnf_repo }}'
+      baseurl: /mnt
+      enabled: false
+    failed_when: false
 
-    - name: Disable 'APE Local DNF' repository
-      ansible.builtin.yum_repository:
-        name: '{{ frmn_local_dnf_repo }}'
-        # baseurl: /mnt
-        enabled: false
-      # failed_when: false
-
-    # Unmount ISO as should ONLY be req'd prior to and during ipa-server install (via role above) 
-    - name: Umount the ISO
-      ansible.builtin.mount:
-        path: /mnt
-        state: unmounted
-
-    # when: not inet_access
-    when: false
-  # ---------------------------------------------------------------------------
+  # Unmount ISO as should ONLY be req'd prior to and during ipa-server install (via role above)
+  - name: Unmount the ISO
+    ansible.builtin.mount:
+      path: /mnt
+      state: unmounted
 
 - name: Playbook to configure IPA clients
   hosts: ipa_client

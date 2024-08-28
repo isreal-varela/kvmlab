@@ -12,7 +12,7 @@
 
     - name: "Include task list for Foreman Master/Upstream config"
       include_tasks: foreman_host_upstream_config.yml
-      when: inet_access
+      when: ( is_upstream | default(false) )
 
     - name: "Include task list for Foreman Host/Downstream config"
       vars:
@@ -21,19 +21,23 @@
         #  will not use a named "Lifecycle Environment"
         frmn_lce: "Library"
       include_tasks: foreman_host_downstream_config.yml
-      when: not inet_access
+      when: not ( is_upstream | default(false) )
 
     # ---------------------------------------------------------------------------
     #  When using the "generate-command", it would be used for any previously
     #    un-registered host
     - name: "Generate host-registration command"
       ansible.builtin.shell:
-        hammer -c "{{ frmn_hmr_cfg_file }}" host-registration generate-command --activation-keys "{{ frmn_act_key }}"
+        hammer -c "{{ frmn_hmr_cfg_file }}" host-registration generate-command --force=true --activation-keys "{{ frmn_act_key }}"
       register: frmn_reg_cmd
+      when:
+        - not skip_frmn_register
 
     - name: "Save host-registration command"
       set_fact:
-        reg_cmd: "{{ frmn_reg_cmd.stdout }}" 
+        reg_cmd: "{{ frmn_reg_cmd.stdout }}"
+      when:
+        - not skip_frmn_register
 
 # --------------------------------------------------------------------------------------------------
 
@@ -58,37 +62,52 @@
   #   frmn_validate_cert: false
 
   tasks:
-    - name: "Include shared Foreman environment-specific variables"
-      ansible.builtin.include_vars: frmn.yml
 
-    - name: "Perform registration"
-      become: true
-      ansible.builtin.shell:
-        cmd: "{{ hostvars[groups['foreman_host'][0]].reg_cmd }}"
-      register: reg_out
-      failed_when: 
-        - ( reg_out.rc != 0 )
-        - ( reg_out.rc != 1 )
-        - '"This system is already registered" not in reg_out.stdout'
+    - name: Execute post configurations on KVMs
+      block:
+
+      - name: "Include shared Foreman environment-specific variables"
+        ansible.builtin.include_vars: frmn.yml
+
+      - name: "Perform registration"
+        become: true
+        ansible.builtin.shell:
+          cmd: "{{ hostvars[groups['foreman_host'][0]].reg_cmd }}"
+        register: reg_out
+        failed_when:
+          - ( reg_out.rc != 0 )
+          - ( reg_out.rc != 1 )
+          - '"This system is already registered" not in reg_out.stdout'
+
+      when:
+        - not skip_frmn_register
+        - ( hostvars['localhost'].foreman_host_specified | default(false) )
 
 - hosts: foreman_host
   gather_facts: false
 
   tasks:
 
-    # ---------------------------------------------------------------------------
-    #  Force update to hostgroup for all hosts that should now exist based
-    #    on "registration" above
-    - name: "Ensure hostgroup membership"
-      ansible.builtin.shell:
-        hammer -c "{{ frmn_hmr_cfg_file }}" host update --name "{{ item }}.{{ dns_name }}" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroup "{{ frmn_hostgroup_name }}"
-      register: hammer_out
-      failed_when: 
-        - ( hammer_out.rc != 0 )
-        - ( hammer_out.rc != 65 )
-      changed_when: '"Host updated" in hammer_out.stdout'
-      with_items:
-        - '{{ kvm_list | selectattr("enabled") | map(attribute="name") }}'
+    - name: Execute post configurations on Foreman for KVMs
+      block:
+
+      # ---------------------------------------------------------------------------
+      #  Force update to hostgroup for all hosts that should now exist based
+      #    on "registration" above
+      - name: "Ensure hostgroup membership"
+        ansible.builtin.shell:
+          hammer -c "{{ frmn_hmr_cfg_file }}" host update --name "{{ item }}.{{ dns_name }}" --organization "{{ frmn_org }}" --location "{{ frmn_loc }}" --hostgroup "{{ frmn_hostgroup_name }}"
+        register: hammer_out
+        failed_when:
+          - ( hammer_out.rc != 0 )
+          - ( hammer_out.rc != 65 )
+        changed_when: '"Host updated" in hammer_out.stdout'
+        with_items:
+          - '{{ kvm_list | selectattr("enabled") | map(attribute="name") }}'
+        when: hostvars[groups['foreman_host'][0]].reg_cmd is defined
+
+      when:
+        - not skip_frmn_register
+        - ( hostvars['localhost'].foreman_host_specified | default(false) )
 
 # --------------------------------------------------------------------------------------------------
-

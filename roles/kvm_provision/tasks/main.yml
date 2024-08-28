@@ -9,7 +9,7 @@
   block:
 
     - name: Pre-requisite package list
-      debug:
+      ansible.builtin.debug:
         var: kvm_prereq_pkgs
         verbosity: 2
 
@@ -43,7 +43,7 @@
   block:
 
     - name: Show initial VM config variables
-      debug:
+      ansible.builtin.debug:
         msg:
           - "For 'vm_name' = '{{ vm_name }}', using the following initial parameters:"
           - "          vm_item_name: '{{ vm_item_name }}'"
@@ -53,10 +53,14 @@
           - "              vm_vcpus: {{ vm_vcpus }}"
           - "             vm_ram_mb: {{ vm_ram_mb }}"
           - "          vm_root_disk: '{{ vm_root_disk }}'"
+          - "           vm_var_part: {{ vm_var_part | default(0) }}"
           - "                vm_net: '{{ vm_net }}'"
           - "            vm_ip_addr: {{ vm_ip_addr }}"
+          - "               vm_net2: '{{ vm_net2 }}'"
+          - "           vm_ip_addr2: {{ vm_ip_addr2 }}"
           - "              vm_roles: '{{ vm_roles }}'"
           - "                vm_iso: '{{ vm_iso }}'"
+          - "              dns_name: '{{ dns_name }}'"
         verbosity: 0
       tags:
         - kvm_pre_cfg
@@ -97,9 +101,16 @@
       become: true
       tags:
         - kvm_prov
-    - name: Copy cloud-init network config
+    - name: Copy cloud-init network config (single)
       template: "src=network-config.j2 dest={{ cloud_init_network_config }} mode=0777 owner=qemu group=libvirt"
       become: true
+      when: ( ( vm_net2 | default("") ) == "" )
+      tags:
+        - kvm_prov
+    - name: Copy cloud-init network config (dual)
+      template: "src=network-config-dual.j2 dest={{ cloud_init_network_config }} mode=0777 owner=qemu group=libvirt"
+      become: true
+      when: ( ( vm_net2 | default("") ) != "" )
       tags:
         - kvm_prov
 
@@ -164,4 +175,3 @@
     groups: "{{ vm_roles }}"
   tags:
     - kvm_pre_cfg
-
