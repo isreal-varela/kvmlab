@@ -137,3 +137,10 @@
       ansible.builtin.mount:
         path: /mnt
         state: unmounted
+
+    - name: adding existing user 'ansible' to group 'pulp'
+      user:
+        name: ansible
+        groups: pulp
+        append: yes
+

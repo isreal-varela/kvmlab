@@ -47,6 +47,7 @@
     block:
 
     - name: "RSYNC to upload/stage importable artifacts"
+      become: false
       ansible.posix.synchronize: 
         mode: push
         src: "{{ frmn_import_stg_source }}/{{ frmn_content_view }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/"
@@ -54,6 +55,14 @@
         recursive: true
         private_key: /srv/keys/vm_key
         verify_host: false
+        use_ssh_args: true
+        rsync_opts:
+        - "--verbose"
+        archive: false
+        checksum: true
+        group: false
+        perms: false
+        times: true
         use_ssh_args: true
       tags: frmn_downstream_upload
       vars:
