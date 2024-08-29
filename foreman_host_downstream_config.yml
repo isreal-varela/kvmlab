@@ -63,7 +63,6 @@
         group: false
         perms: false
         times: true
-        use_ssh_args: true
       tags: frmn_downstream_upload
       vars:
         ansible_ssh_user: ansible
