@@ -11,7 +11,7 @@
             dns: "{{ inventory_hostname }}.{{ dns_name }}"
             principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
             ca: ipa
-      when: ( is_upstream == false )
+      when: ( is_upstream == false ) and ( not ( skip_cert | default( false ) ) )
 
 - name: Playbook to install foreman
   hosts: foreman_host
@@ -88,7 +88,7 @@
           --enable-foreman-proxy-plugin-ansible \
           -l INFO
       # register: fm_install_rc
-      when: ( is_upstream == true )
+      when: ( is_upstream == true ) or ( skip_cert | default( false ) )
 
     - name: Execute foreman-installer (downstream-only)
       ansible.builtin.shell: |
@@ -110,7 +110,8 @@
           --enable-foreman-proxy-plugin-ansible \
           -l INFO
       # register: fm_install_rc
-      when: ( is_upstream == false )
+      when: ( is_upstream == false ) and ( not ( skip_cert | default( false ) ) )
+
 
       # HOLDING PEN FOR OTHER POSSIBLE CLI PARAMETERS
       #    --enable-foreman-plugin-remote-execution \

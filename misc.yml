@@ -1,6 +1,6 @@
 ---
 - name: Deploy postfix
-  hosts: logger_host
+  hosts: kvms
   become: true
   tasks:
     - name: "Include rhel-system-roles.postfix"

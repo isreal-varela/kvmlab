@@ -25,7 +25,7 @@
             principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
             ca: ipa
             run_before: systemctl stop quay-app.service
-      when: not stat_crt.stat.exists or not stat_key.stat.exists
+      when: ( not stat_crt.stat.exists or not stat_key.stat.exists ) and ( is_upstream == false )
 
 - name: Configure mirror registry
   hosts: registry_host
@@ -121,13 +121,13 @@
       ansible.builtin.shell: |
         cp -p "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
               "/opt/quay/stage/"
-      when: not stat_crt.stat.exists
+      when: ( not stat_crt.stat.exists or not stat_key.stat.exists ) and ( is_upstream == false )
 
     - name: Copy key file within target node
       ansible.builtin.shell: |
         cp -p "/etc/pki/tls/private/{{ inventory_hostname }}.key" \
               "/opt/quay/stage/"
-      when: not stat_key.stat.exists
+      when: ( not stat_crt.stat.exists or not stat_key.stat.exists ) and ( is_upstream == false )
 
     ## Unlike Foreman, the mirror-registry installer is not as 'idempotent'.
     ## Meaning it will error out when run when an instance already has components
