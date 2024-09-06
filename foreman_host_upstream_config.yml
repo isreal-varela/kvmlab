@@ -249,7 +249,6 @@
       state: present
     tags:
       - frmn_upstream_config
-      - frmn_upstream_export
 
   - name: "Ensure content view v1.0 is published into lab"
     theforeman.foreman.content_view_version:

@@ -41,6 +41,7 @@ foreman_host:
     george
   vars:
     is_upstream: true
+    skip_cert: true
 
 registry_host:
   # hosts:
