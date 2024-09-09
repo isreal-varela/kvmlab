@@ -49,6 +49,8 @@ foreman_host:
 registry_host:
   hosts:
     mirror-reg
+  vars:
+    is_upstream: false
 
 kvms:
   vars:
