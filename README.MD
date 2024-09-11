@@ -17,13 +17,11 @@ The following "roles" have been defined within the playbook configuration for us
 
 An example of items follows:
 
-```json
-{
-  kvm_list:
-  - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients", "logger_client"], cpus: 2, ram_mb: 4096}
-  - {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients", "ipa_client", "logger_client"], rt_disk: '240G', var_part: 102400, iso: "foreman"}
-  - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients", "ipa_client", "logger_client"], rt_disk: '80G'}
-}
+```
+kvm_list:
+- {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients", "logger_client"], cpus: 2, ram_mb: 4096}
+- {name: "foreman",    ip_addr: "192.168.100.44", enabled: true,  roles: ["foreman_host",  "nbde_clients", "ipa_client", "logger_client"], rt_disk: '240G', var_part: 102400, iso: "foreman"}
+- {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients", "ipa_client", "logger_client"], rt_disk: '80G'}
 ```
 
 Upon launching "./setup.sh <environment name>", user will be prompted for multiple passwords including:
