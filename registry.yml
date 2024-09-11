@@ -156,3 +156,11 @@
       containers.podman.podman_container_info:
     #   name:
     #     - quay-app
+
+    - name: Disable 'APE Local DNF' repository
+      ansible.builtin.yum_repository:
+        name: '{{ local_dnf_repo }}'
+        baseurl: /mnt
+        enabled: false
+      failed_when: false
+
