@@ -3,7 +3,7 @@ The network is set up for NAT so might need to update some stuff in the future
 
 The following "roles" have been defined within the playbook configuration for use when deploying any KVM instance.  A KVM is currently defined within the 'kvm_list' variable consisting of 1 or more items (KVMs).  Each item is actually an object defined with the following properties:
 
-- name = the unique short-name for the host within the environment.  Concatenated with the overall 'dns_name' value to produce a fully qualified domain name that will be registered within the IPA component and, temporarily, included within the consolidate 'hosts' file.
+- **name** = the unique short-name for the host within the environment.  Concatenated with the overall 'dns_name' value to produce a fully qualified domain name that will be registered within the IPA component and, temporarily, included within the consolidate 'hosts' file.
 - **ip_addr** = the IP address assigned to the host during provisioning and included in both 'hosts' file and IPA registered host.
 - **roles** = array of host specific roles to determine what add'l components to deploy onto said host.  If empty list, *only* baseOS KVM will be provisioned without additional software or configurations.
 - **cpus** (*optional*) = number of vCPUs allocated to host during initial provisioning.  Used to override "default" value (*vm_vcpus*).
@@ -15,7 +15,6 @@ The following "roles" have been defined within the playbook configuration for us
 - **ip_addr2** (*optional*) = the static IP address for the additional network connection for the individual KVM
 
 An example of items follows:
-
 ```
 kvm_list:
 - {name: "ipa1",       ip_addr: "192.168.100.40", enabled: true,  roles: ["ipa_host",      "nbde_clients", "logger_client"], cpus: 2, ram_mb: 4096}
@@ -23,13 +22,12 @@ kvm_list:
 - {name: "mirror-reg", ip_addr: "192.168.100.45", enabled: true,  roles: ["registry_host", "nbde_clients", "ipa_client", "logger_client"], rt_disk: '80G'}
 ```
 
-The single parameter required to run the setup stipulates the "environment name" for which there need to be corresponding files (with ".yml" extension) in both the *./hosts/* and *./secrets/* folders.  If the parameter is NOT provided or corresponding files in those two folders not located, the playbook will NOT be executed.
+The single parameter required to run the setup stipulates the "environment name" for which there need to be corresponding files (with ".yml" extension) in both the *./hosts/* and *./secrets/* folders.  If the parameter is **NOT** provided or corresponding files in those two folders not located, the playbook will **NOT** be executed.
 
-Upon launching "./setup.sh <environment name>", user will be prompted for multiple passwords including:
+Upon launching "./setup.sh *environment name*", user will be prompted for multiple passwords including:
 - "SSH password" -- password for "current user" executing the playbook on the server HOSTING all the KVM instances
 - "BECOME password" -- usually the same as the value for "SSH password" (will default to that value when simply hitting ENTER w/o any other entry)
-- "Vault password" -- used to decrypt the referenced "secrets" file containing values (mainly passwords) for various configured items
-    (i.e. IPA/FOREMAN/QUAY admin user, etc.)
+- "Vault password" -- used to decrypt the referenced "secrets" file containing values (mainly passwords) for various configured items (i.e. IPA/FOREMAN/QUAY admin user, etc.)
 
 The following items have been configured for deployment to the KVM instances based on the specified "role":
 
@@ -44,7 +42,7 @@ The following items have been configured for deployment to the KVM instances bas
 - [ ] CI/CD Tooling
 - [ ] OpenShift - ACS, Compliance Operator, File Integrity Operator
 
-There are additional "playbooks" that can be executed for various operational related tasks.  These files are:
+There are additional "playbooks" that can be executed for various operations related tasks.  These files are:
 
 - **foreman_host_upstream_incr.yml** -- This playbook will connect to an "upstream" Foreman instance, create/publish a NEW version of a Content View, export that new version locally, and copy the generated files/artifact to the "mgmt" server (to /srv/content_view/ sub-folder) all in preparation for "deployment" to a "downstream" Foreman instance.  An example of a command-line to run this play is -- *ansible-playbook -i hosts/sully_upstream.yml foreman_host_upstream_incr.yml -vv -e @./secrets/sully_upstream.yml -e "frmn_content_view_new_version_num=2" --ask-vault-pass --ask-become-pass --ask-pass*.  The *frmn_content_view_new_version_num* variable must be provided as an *integer* value (major version) that will be created in Foreman.
 - **foreman_host_downstream_incr.yml** -- This playbook will connect to a "downstream" Foreman instance, upload a set of generated files/artifacts to the host, and initiate a Hammer session to import the uploaded files.  An example of a command-line to run this play is -- *ansible-playbook -i hosts/sully_downstream.yml foreman_host_downstream_incr.yml -vv -e @./secrets/sully_downstream.yml -e "frmn_import_stg_version_num='2.0' frmn_import_stg_tsfolder='YYYY-MM-DDThh-mm-ss-00-00'" --ask-vault-pass --ask-become-pass --ask-pass*.  The "frmn_import_stg_version_num" variable value must be provided as a *string* representing "major.minor" version numbers and **MUST** match the folder name generated by the export (i.e. in "/srv/content_view/APE_Content_View/**_2.0_**/*2024-09-01T01-00-00-00-00*", "**2.0**" is the generated value).  Similarly, the "frmn_import_stg_tsfolder" variable value must also be provided as a *string* and represents the _timestamp_ when the export was executed (i.e. in the prior example string, the final sub-folder name starting with "*2024-09-01*" is that value).
