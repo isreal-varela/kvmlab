@@ -1,0 +1,56 @@
+---
+
+- hosts: foreman_host
+  gather_facts: false
+
+  tasks:
+
+  - name: "Include shared Foreman environment-specific variables"
+    ansible.builtin.include_vars: frmn.yml
+
+  # - name: Create a directory if it does not exist
+  #   ansible.builtin.file:
+  #     path: '{{ frmn_import_stg_target }}'
+  #     state: directory
+  #     mode: '0755'
+
+  - name: "RSYNC to upload/stage importable artifacts"
+    become: false
+    ansible.posix.synchronize: 
+      mode: push
+      src: "{{ frmn_import_stg_source }}/{{ frmn_content_view }}/{{ frmn_import_stg_version_num }}/{{ frmn_import_stg_tsfolder }}/"
+      dest: '{{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/'
+      recursive: true
+      private_key: /srv/keys/vm_key
+      verify_host: false
+      use_ssh_args: true
+      rsync_opts:
+      - "--verbose"
+      archive: false
+      checksum: true
+      owner: false
+      group: false
+      perms: false
+      times: false
+    tags: frmn_downstream_upload
+    vars:
+      ansible_ssh_user: ansible
+
+  - name: "Recursively change ownership uploaded/staged exported foreman content for import"
+    become: true
+    ansible.builtin.file:
+      path: '{{ frmn_import_stg_target }}'
+      state: directory
+      recurse: yes
+      owner: pulp
+      group: pulp
+    tags: frmn_downstream_upload
+
+  - name: "Execute import of staged foreman content view"
+    become: true
+    ansible.builtin.shell: |
+      hammer -c "{{ frmn_hmr_cfg_file }}" content-import version \
+             --organization='Default Organization' \
+             --path='{{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/' \
+             --metadata-file='{{ frmn_import_stg_target }}/{{ frmn_import_stg_version_num }}/metadata.json'
+    tags: frmn_downstream_import

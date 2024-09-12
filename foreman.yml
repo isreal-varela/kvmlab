@@ -71,7 +71,7 @@
         name: ansiblerole-foreman_scap_client
         state: present
 
-    - name: Execute foreman-installer (upstream-only)
+    - name: Execute foreman-installer (upstream-only [or when 'skip_cert'])
       ansible.builtin.shell: |
         foreman-installer --scenario katello \
           --foreman-proxy-content-pulpcore-additional-export-paths /opt/pulp/exports \

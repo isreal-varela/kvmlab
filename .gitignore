@@ -2,4 +2,4 @@
 .vscode/
 
 #Misc test-related files
-**/dbtmp.yml
+**/dbtmp*.yml

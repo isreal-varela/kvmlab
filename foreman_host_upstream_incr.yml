@@ -1,0 +1,82 @@
+---
+
+- hosts: foreman_host
+  gather_facts: false
+
+  tasks:
+
+  - name: "Include shared Foreman environment-specific variables"
+    ansible.builtin.include_vars: frmn.yml
+
+  - name: "Publish a new specified version of the content view"
+    theforeman.foreman.content_view_version:
+      content_view: "{{ frmn_content_view }}"
+      organization: "{{ frmn_org }}"
+      version: "{{ frmn_content_view_new_version_num }}"
+      lifecycle_environments:
+      - "{{ frmn_lce }}"
+      - "Library"
+      username: "{{ frmn_usr }}"
+      password: "{{ frmn_pwd }}"
+      server_url: "{{ frmn_url }}"
+      validate_certs: "{{ frmn_validate_cert }}"
+      state: present
+    register: frmn_pubver_out
+    tags: frmn_upstream_incr
+
+  - name: "Retrive content view version ID for newly published item"
+    ansible.builtin.set_fact:
+      frmn_content_view_version_id: "{{ frmn_pubver_out.entity.content_view_versions[0].id | default(omit) }}"
+
+  # ---------------------------------------------------------------------------
+  #  Export/prepare importable artifacts for use "downstream"
+  - name: Export/prepare importable artifacts for use "downstream"
+    block:
+
+    - name: "Attempt Content View export"
+      become: true
+      ansible.builtin.shell: |
+        hammer -c "{{ frmn_hmr_cfg_file }}" content-export incremental version \
+               --content-view="{{ frmn_content_view }}" \
+               --id={{ frmn_content_view_version_id }} \
+               --chunk-size-gb=2 \
+               --organization="Default Organization"
+      register: hammer_out
+      when: frmn_content_view_version_id is defined 
+
+    - name: "Debug hammer output"
+      ansible.builtin.debug:
+        var: hammer_out.stdout
+    tags: frmn_upstream_export
+
+  - name: Ensure "fetch" task will have access to read exported files
+    become: true
+    ansible.builtin.file:
+      path: "/opt/pulp/exports"
+      recurse: true
+      mode: 0775
+    tags:
+    - frmn_upstream_export
+    - frmn_upstream_fetch
+
+  - name: "RSYNC to retrieve importable artifacts"
+    delegate_to: localhost
+    ansible.posix.synchronize:
+      # frmn_content_view: "APE_Content_View"
+      # frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/{{ frmn_content_view }}/"
+      # frmn_export_stg_target: "/srv/content_view/"
+      # frmn_import_stg_source: "{{ frmn_export_stg_target }}"
+      # frmn_import_stg_target: "/opt/pulp/imports/{{ frmn_content_view }}/"
+      # frmn_import_stg_version_num: "1.0"
+      # frmn_import_stg_tsfolder: "2024-09-10T16-52-48-00-00"
+      # frmn_import_stg_metadata_filename: "metadata.json"
+      mode: pull
+      src: '{{ frmn_export_stg_source }}/{{ frmn_content_view_new_version_num }}.0/'
+      dest: '{{ frmn_export_stg_target }}/{{ frmn_content_view }}/{{ frmn_content_view_new_version_num }}.0/'
+      recursive: true
+      private_key: /srv/keys/vm_key
+      verify_host: false
+      use_ssh_args: true
+    tags: frmn_upstream_fetch
+    vars:
+      ansible_ssh_user: ansible
