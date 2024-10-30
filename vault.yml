@@ -1,5 +1,19 @@
 ---
 
+- name: Certificate Housekeeping
+  hosts: foreman_host
+  become: true
+
+  tasks:
+    - name: Cleanout existing service to revoke existing certs
+      ipaservice:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
+        continue: true
+        state: absent
+      when: ( is_upstream == false ) and ( not ( skip_cert | default( false ) ) )
+      tags: vault_new_cert
+
 - name: Generate certificates for use with Hashicorp Vault
   hosts: vault_host
   become: true
@@ -11,6 +25,7 @@
         dns: "{{ inventory_hostname }}.{{ dns_name }}"
         principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
         ca: ipa
+    tags: vault_new_cert
 
 - name: Configure firewall, folders, config files, etc. for Hashicorp Vault
   hosts: vault_host

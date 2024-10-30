@@ -54,8 +54,8 @@
     - name: Add/update full KVM host /etc/hosts file entries
       ansible.builtin.lineinfile:
         dest: /etc/hosts
-        regexp: '{{ item.name }}.{{ dns_name }}'
-        line: '{{ item.ip_addr | default(ip_addr) }}   {{ item.name }}.{{ dns_name }} {{ item.name }}'
+        regexp: '{{ item.name }}$'
+        line: '{{ item.ip_addr | default(ip_addr) }}   {{ item.name }}'
         state: present
       become: true
       with_items:
@@ -95,10 +95,10 @@
   tags:
   - kvm_pre_cfg
 
-- name: Include a play for NBDE Servers/clients
-  ansible.builtin.import_playbook: nbde.yml
-  tags:
-  - nbde_cfg
+# - name: Include a play for NBDE Servers/clients
+#   ansible.builtin.import_playbook: nbde.yml
+#   tags:
+#   - nbde_cfg
 
 - name: Include a play for IPA Server/Client
   become: true
@@ -116,10 +116,10 @@
   tags:
   - mirror-reg_cfg
 
-- name: Include a play for Hashicorp Vault
-  ansible.builtin.import_playbook: vault.yml
-  tags:
-  - vault_cfg
+# - name: Include a play for Hashicorp Vault
+#   ansible.builtin.import_playbook: vault.yml
+#   tags:
+#   - vault_cfg
 
 - name: Include a play for Syslog Servers/Clients
   ansible.builtin.import_playbook: logging.yml

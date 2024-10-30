@@ -1,0 +1,38 @@
+apiVersion: v1
+baseDomain: {{ dns_name }}
+metadata:
+  name: {{ cluster_name }}
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 192.168.122.0/24
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  replicas: 0
+controlPlane:
+  architecture: amd64 
+  hyperthreading: Enabled
+  name: master
+  replicas: {{ master_node_count }}
+platform:
+  none: {}
+fips: false
+pullSecret: '{"auths":{"{{ registry_path }}":{"auth":"{{ mirror_reg_auth }}","email":"{{ mirror_reg_user }}"}}}'
+sshKey: "{{ ocp_ansible_sshkey }}"
+imageDigestSources:
+- mirrors:
+  - {{ registry_path }}/openshift/release
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+- mirrors:
+  - {{ registry_path }}/openshift/release-images
+  source: quay.io/openshift-release-dev/ocp-release
+additionalTrustBundle: |
+{{ ipa_ca_cert | indent(2, true) }}
+additionalTrustBundlePolicy: Always

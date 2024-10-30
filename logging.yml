@@ -50,7 +50,8 @@
 
 # Client Configuration
 - name: Configure syslog client to send to logger server
-  hosts: logger_client
+#  hosts: logger_client
+  hosts: kvms,!logger
   become: true
   roles:
     - rhel-system-roles.logging

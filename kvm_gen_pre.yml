@@ -18,21 +18,23 @@
       vars:
         ansible_connection: local
 
-    - name: "Upload master hosts file to each KVM"
-      become: true
-      ansible.builtin.copy:
-        src: /etc/hosts
-        dest: /etc/hosts
-        owner: root
-        group: root
-        mode: '0644'
-        backup: true
-      vars:
-        ansible_connection: ssh
-        ansible_ssh_user: ansible
-        ansible_become_user: root
-        ansible_become_password: "{{ vault_kvm_os_usr_ans_pwd }}"
-        ansible_ssh_private_key_file: "{{ vault_kvm_os_usr_ans_keyfile }}"
+    # BeetleD 2014-10-28: Disabled as IPA DNS is included in "mgmt" nm config
+    # - name: "Upload master hosts file to each KVM"
+    #   become: true
+    #   ansible.builtin.copy:
+    #     src: /etc/hosts
+    # #    dest: /etc/hosts
+    #     owner: root
+    #     group: root
+    #     mode: '0644'
+    #     backup: true
+    #   vars:
+    #     ansible_connection: ssh
+    #     ansible_ssh_user: ansible
+    #     ansible_become_user: root
+    #     ansible_become_password: "{{ vault_kvm_os_usr_ans_pwd }}"
+    #     ansible_ssh_private_key_file: "{{ vault_kvm_os_usr_ans_keyfile }}"
+    #   when: false
 
 - name: Pre-config excluding foreman and ipa
   hosts: kvms    #,!foreman_host,!ipa_host

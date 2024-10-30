@@ -1,0 +1,51 @@
+---
+- name: Prepare OpenShift installation artifacts
+  hosts: localhost
+  gather_facts: false
+  become: false
+  vars:
+    master_node_count: '{{ ( node_list | selectattr("enabled") | selectattr("role", "equalto", "master") |  list ) | length }}'
+    ocp_ansible_sshkey: '{{ lookup("file", "/srv/keys/vm_key.pub") }}'
+    ocp_api_fqdn: 'api.{{ cluster_name }}.{{ dns_name }}'
+    mirror_reg_auth: "{{ ( ipaadmin_principal ~ ':' ~ ipaadmin_password ) | b64encode }}"
+    mirror_reg_user: '{{ ipaadmin_principal }}'
+    rendezvousIP: '{{ ( node_list | selectattr("enabled") | selectattr("role", "equalto", "master") |  first ).ip_addr }}'
+
+  tasks:
+
+    - name: SCP ca.crt file from standard IPA location
+      ansible.builtin.shell: "scp -i /srv/keys/vm_key ansible@ipa1:/etc/ipa/ca.crt {{ ocp_configs_path }}/ipa_ca.crt"
+      changed_when: false
+
+    - name: Stage IPA CA certificate (as PEM)
+      ansible.builtin.set_fact:
+        ipa_ca_cert: '{{ lookup("file", "{{ ocp_configs_path }}/ipa_ca.crt") }}'
+
+#    - name: Lookup A (IPv4) records for named OCP cluster (via lookup)
+#      ansible.builtin.debug:
+#        msg: "{{ query( 'community.dns.lookup', ocp_api_fqdn ) }}"
+#
+#    - name: Lookup A (IPv4) records for named OCP cluster (via dig)
+#      ansible.builtin.debug:
+#        msg: "{{ lookup( 'community.dns.dig', ocp_api_fqdn ) }}"
+
+    - name: Create 'agent-config.yaml' file from template
+      ansible.builtin.template:
+        src: ocp_agent-config.yaml.j2
+        dest: "{{ ocp_configs_path }}/../agent-config.yaml"
+
+    - name: Create 'install-config.yaml' file from template
+      ansible.builtin.template:
+        src: ocp_install-config.yaml.j2
+        dest: "{{ ocp_configs_path }}/../install-config.yaml"
+
+    - name: Create 'agent-config.yaml' file from template
+      ansible.builtin.template:
+        src: ocp_agent-config.yaml.j2
+        dest: "{{ ocp_configs_path }}/agent-config.yaml{{ ocp_configs_suffix }}"
+
+    - name: Create 'install-config.yaml' file from template
+      ansible.builtin.template:
+        src: ocp_install-config.yaml.j2
+        dest: "{{ ocp_configs_path }}/install-config.yaml{{ ocp_configs_suffix }}"
+

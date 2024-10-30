@@ -13,6 +13,20 @@
         path: "/etc/pki/tls/private/{{ inventory_hostname }}.key"
       register: stat_key
 
+- name: Certificate Housekeeping
+  hosts: foreman_host
+  become: true
+
+  tasks:
+    - name: Cleanout existing service to revoke existing certs
+      ipaservice:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
+        continue: true
+        state: absent
+      when: ( is_upstream == false ) and ( not ( skip_cert | default( false ) ) )
+      tags: reg_new_cert
+
 - name: Generate certificates for use with Quay mirror registry
   hosts: registry_host
   become: true
@@ -26,6 +40,7 @@
             ca: ipa
             run_before: systemctl stop quay-app.service
       when: ( not stat_crt.stat.exists or not stat_key.stat.exists ) and ( is_upstream == false )
+      tags: reg_new_cert
 
 - name: Configure mirror registry
   hosts: registry_host
@@ -40,23 +55,27 @@
         boot: false
         opts: "ro,noauto"
         state: mounted
+      tags: reg_install
 
     - name: "Check that the /etc/yum.repos.d/registry-local.repo exists"
       ansible.builtin.stat:
         path: /etc/yum.repos.d/registry-local.repo
       register: repofile_stat_result
+      tags: reg_install
 
     - name: "Upload 'registry-local.repo' file"
       ansible.builtin.template:
         src: registry-iso.repo.j2
         dest: "/etc/yum.repos.d/registry-local.repo"
       when: not repofile_stat_result.stat.exists
+      tags: reg_install
 
     - name: Execute dnf update
       ansible.builtin.shell: |
         dnf --assumeno --nobest update
       when: not repofile_stat_result.stat.exists
       failed_when: false
+      tags: reg_install
 
     - name: Allow incoming API traffic to the local host and then to pod
       ansible.builtin.include_role:
@@ -67,6 +86,7 @@
             state: enabled
             runtime: true
             permanent: true
+      tags: reg_install
 
     - name: Create target folder for software upload
       ansible.builtin.file:
@@ -74,6 +94,7 @@
         state: directory
         owner: ansible
         mode: '0755'
+      tags: reg_install
 
     - name: Create target quay configuration files
       ansible.builtin.file:
@@ -81,6 +102,7 @@
         state: directory
         owner: ansible
         mode: '0755'
+      tags: reg_install
 
     - name: Create target quay configuration files
       ansible.builtin.file:
@@ -88,79 +110,78 @@
         state: directory
         owner: ansible
         mode: '0755'
+      tags: reg_install
 
     - name: Install podman
       become: true
       ansible.builtin.package:
         name: podman
         state: present
+      tags: reg_install
 
-    # BeetleD (2024-08-09, 14:45 UTC): Apparently, this module relies on podman being installed.
     - name: Gather facts for podman containers prior to install
       containers.podman.podman_container_info:
-    #   name:
-    #     - quay-app
-
-    - name: Stage 'mirror-registry' archive on target for later execution
-      become: false
-      ansible.builtin.unarchive:
-        src: /srv/software/mirror-registry.tar.gz
-        dest: /srv/quay_install
-
-    - name: "Check for existance of host cert file"
-      ansible.builtin.stat:
-        path: "/opt/quay/quay-config/{{ inventory_hostname }}.crt"
-      register: stat_crt
-
-    - name: Check for existance of host key file
-      ansible.builtin.stat:
-        path: "/opt/quay/quay-config/{{ inventory_hostname }}.key"
-      register: stat_key
-
-    - name: Copy cert file within target node
-      ansible.builtin.shell: |
-        cp -p "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
-              "/opt/quay/stage/"
-      when: ( not stat_crt.stat.exists or not stat_key.stat.exists ) and ( is_upstream == false )
-
-    - name: Copy key file within target node
-      ansible.builtin.shell: |
-        cp -p "/etc/pki/tls/private/{{ inventory_hostname }}.key" \
-              "/opt/quay/stage/"
-      when: ( not stat_crt.stat.exists or not stat_key.stat.exists ) and ( is_upstream == false )
+      register: quay_container_info
+      changed_when: false
 
     ## Unlike Foreman, the mirror-registry installer is not as 'idempotent'.
     ## Meaning it will error out when run when an instance already has components
     ## in-place/installed.
     ##
-    ## Reverted these "new" lines back to the "originals" and the "staged"
-    ##   copies above are "unused".
-    ##                              --sslCert "/opt/quay/stage/{{ inventory_hostname }}.crt" \
-    ##                              --sslKey "/opt/quay/stage/{{ inventory_hostname }}.key" \
-    - name: Execute mirror-registry installer
-      become: true
-      ansible.builtin.shell: |
-        cd /srv/quay_install &&
-        ./mirror-registry install --quayHostname "{{ inventory_hostname }}.{{ dns_name }}" \
-                                  --quayRoot /opt/quay \
-                                  --initUser {{ quay_admin_user }} \
-                                  --initPassword {{ quay_admin_password }} \
-                                  --sslCert "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
-                                  --sslKey "/etc/pki/tls/private/{{ inventory_hostname }}.key" \
-                                  --sslCheckSkip false \
-                                  --verbose
-      register: exec_output
+    - name: Install Quay mirror registry (not idempotent, bypassed if pods running)
+      tags: reg_install
+      when: ( ( quay_container_info.containers | length ) == 0 )
+      block:
 
-    # BeetleD (2024-08-09, 14:45 UTC): Apparently, this module relies on podman being installed.
-    - name: Gather facts for podman containers prior to install
-      containers.podman.podman_container_info:
-    #   name:
-    #     - quay-app
+        - name: Stage 'mirror-registry' archive on target for later execution
+          become: false
+          ansible.builtin.unarchive:
+            src: /srv/software/mirror-registry.tar.gz
+            dest: /srv/quay_install
 
-    - name: Disable 'APE Local DNF' repository
-      ansible.builtin.yum_repository:
-        name: '{{ local_dnf_repo }}'
-        baseurl: /mnt
-        enabled: false
-      failed_when: false
+        - name: "Check for existance of host cert file"
+          ansible.builtin.stat:
+            path: "/opt/quay/quay-config/{{ inventory_hostname }}.crt"
+          register: stat_crt
 
+        - name: Check for existance of host key file
+          ansible.builtin.stat:
+            path: "/opt/quay/quay-config/{{ inventory_hostname }}.key"
+          register: stat_key
+
+        - name: Copy cert file within target node
+          ansible.builtin.shell: |
+            cp -p "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
+                  "/opt/quay/stage/"
+          when: ( not stat_crt.stat.exists or not stat_key.stat.exists ) and ( is_upstream == false )
+
+        - name: Copy key file within target node
+          ansible.builtin.shell: |
+            cp -p "/etc/pki/tls/private/{{ inventory_hostname }}.key" \
+                  "/opt/quay/stage/"
+          when: ( not stat_crt.stat.exists or not stat_key.stat.exists ) and ( is_upstream == false )
+
+          ## Reverted these "new" lines back to the "originals" and the "staged"
+          ##   copies above are "unused".
+          ##                              --sslCert "/opt/quay/stage/{{ inventory_hostname }}.crt" \
+          ##                              --sslKey "/opt/quay/stage/{{ inventory_hostname }}.key" \
+        - name: Execute mirror-registry installer
+          become: true
+          ansible.builtin.shell: |
+            cd /srv/quay_install &&
+            ./mirror-registry install --quayHostname "{{ inventory_hostname }}.{{ dns_name }}" \
+                                      --quayRoot /opt/quay \
+                                      --initUser {{ quay_admin_user }} \
+                                      --initPassword {{ quay_admin_password }} \
+                                      --sslCert "/etc/pki/tls/certs/{{ inventory_hostname }}.crt" \
+                                      --sslKey "/etc/pki/tls/private/{{ inventory_hostname }}.key" \
+                                      --sslCheckSkip false \
+                                      --verbose
+          register: exec_output
+
+        - name: Disable 'APE Local DNF' repository
+          ansible.builtin.yum_repository:
+            name: '{{ local_dnf_repo }}'
+            baseurl: /mnt
+            enabled: false
+          failed_when: false

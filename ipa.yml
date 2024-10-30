@@ -63,6 +63,29 @@
     state: present
   tags: ipa_cfg_server
 
+- name: DNS record manipulation/verification
+  hosts: ipa_host
+  become: true
+  vars:
+    ipparts: "{{ ansible_default_ipv4.address.split('.') }}"
+    dnsrevzone_name: '{{ ipparts[2] }}.{{ ipparts[1] }}.{{ ipparts[0] }}.in-addr.arpa.'
+    dnsrevrec_name: '{{ ipparts[3] }}'
+    dnsrevrec_host: '{{ ansible_host }}.{{ dns_name }}.'
+      
+  tasks:
+
+    - name: Ensure 'master/forward' zone exists
+      ipadnszone:
+        ipaadmin_password: '{{ ipaadmin_password }}'
+        name: '{{ dns_name }}.'
+      tags: ipa_cfg_server
+
+    - name: Ensure 'reverse' zone exists
+      ipadnszone:
+        ipaadmin_password: '{{ ipaadmin_password }}'
+        name: '{{ dnsrevzone_name }}'
+      tags: ipa_cfg_server
+
 - name: Cleanup IPA server
   hosts: ipa_host
   become: true
@@ -89,3 +112,42 @@
   - role: ipaclient
     state: present
   tags: ipa_cfg_client
+
+- name: DNS record manipulation/verification
+  hosts: ipa_client
+  become: true
+  vars:
+    ipparts: "{{ ansible_default_ipv4.address.split('.') }}"
+    dnsrevzone_name: '{{ ipparts[2] }}.{{ ipparts[1] }}.{{ ipparts[0] }}.in-addr.arpa.'
+    dnsrevrec_name: '{{ ipparts[3] }}'
+    dnsrevrec_host: '{{ ansible_host }}.{{ dns_name }}.'
+      
+  tasks:
+
+    # - name: Ensure DNS 'A' record and reverse/PTR exists
+    #   ipadnsrecord:
+    #         ipaadmin_password: '{{ ipaadmin_password }}'
+    #    name: '{{ ansible_host }}'
+    #     zone_name: '{{ dns_name }}'
+    #     record_type: 'A'
+    #     record_value: '{{ ansible_default_ipv4.address }}'
+    #     create_reverse: yes
+    #   tags: ipa_cfg_client
+
+    - name: Ensure DNS 'A' record exists for host
+      ipadnsrecord:
+        ipaadmin_password: '{{ ipaadmin_password }}'
+        name: '{{ ansible_host }}'
+        zone_name: '{{ dns_name }}'
+        record_type: 'A'
+        record_value: '{{ ansible_default_ipv4.address }}'
+      tags: ipa_cfg_client
+
+    - name: Ensure DNS 'PTR' record exists for host
+      ipadnsrecord:
+        ipaadmin_password: '{{ ipaadmin_password }}'
+        name: '{{ dnsrevrec_name }}'
+        zone_name: '{{ dnsrevzone_name }}'
+        record_type: 'PTR'
+        record_value: '{{ dnsrevrec_host }}'
+      tags: ipa_cfg_client

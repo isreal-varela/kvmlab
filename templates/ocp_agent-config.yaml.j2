@@ -1,0 +1,38 @@
+apiVersion: v1beta1
+kind: AgentConfig
+metadata:
+  name: {{ cluster_name }}
+rendezvousIP: {{ rendezvousIP }}
+additionalNTPSources:
+  - 192.168.122.1
+hosts:
+{% for host in ( node_list | selectattr("enabled") | list ) %}
+  - hostname: {{ host.name }}
+    interfaces:
+      - name: {{ host.ifname | default( default_interface_name ) }}
+        macAddress: {{ host.macAddr }}
+    rootDeviceHints:
+      deviceName: {{ host.diskname | default( default_disk_device_name ) }}
+    networkConfig:
+      interfaces: 
+        - name: {{ host.ifname | default( default_interface_name ) }}
+          type: ethernet
+          state: up
+          mac-address: {{ host.macAddr }}
+          ipv4:
+            enabled: true
+            address:
+              - ip: {{ host.ip_addr }}
+                prefix-length: 24
+            dhcp: false
+      dns-resolver:
+        config:
+          server:
+            - {{ ipaclient_dns_servers }}
+      routes:
+        config:
+          - destination: 0.0.0.0/0
+            next-hop-address: 192.168.122.1
+            next-hop-interface: {{ host.ifname | default( default_interface_name ) }}
+            table-id: 254
+{% endfor %}
