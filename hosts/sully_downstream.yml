@@ -1,4 +1,4 @@
-# file: hosts/sully.yml
+# file: hosts/sully_downstream.yml
 
 tang_host:
 
@@ -51,15 +51,14 @@ logger_client:
 
 foreman_host:
   hosts:
-    #foreman
-    test-frmn
+    foreman
   vars:
     ipaadmin_password: "{{ vault_ipa_ipaadmin_pwd }}"
     is_upstream: false
     env_classification: 'Unclassified'
     env_label: '{{ dns_name | upper }} - {{ env_classification }} - 8-Ball Lab (Downstream)'
     env_colorbar: '#fc3503'
-    frmn_host: "test-frmn.{{ dns_name }}"
+    frmn_host: "foreman.{{ dns_name }}"
     frmn_url: "https://{{ frmn_host }}"
     frmn_content_view: "APE_Content_View"
     frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/{{ frmn_content_view }}/"
@@ -120,10 +119,10 @@ all:
     dns_search: 'ape.dwnstrm'
     skip_frmn_register: false
     kvm_list:
-      - {name: "ipa1",       ip_addr: "192.168.122.40", enabled: true,  roles: ["ipa_host",                    "logger_client" ], cpus: 2, ram_mb: 4096, iso: "ipa-server"}
-      - {name: "foreman",    ip_addr: "192.168.122.44", enabled: false, roles: ["foreman_host",  "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480, rt_disk: '250G', var_part: 124000, iso: "foreman"}
-      - {name: "mirror-reg", ip_addr: "192.168.122.45", enabled: false, roles: ["registry_host", "ipa_client", "logger_client"], ram_mb: 3072, rt_disk: '320G', var_part: 204800, iso: "registry"}
-      - {name: "logger",     ip_addr: "192.168.122.41", enabled: false, roles: ["logger_host",   "ipa_client"]}
+      - {name: "ipa1",       ip_addr: "192.168.122.40", enabled: true,  roles: ["ipa_host",                    "logger_client"], cpus: 2, ram_mb: 4096, iso: "ipa-server"}
+      - {name: "foreman",    ip_addr: "192.168.122.44", enabled: true,  roles: ["foreman_host",  "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480, rt_disk: '250G', var_part: 124000, iso: "foreman"}
+      - {name: "mirror-reg", ip_addr: "192.168.122.45", enabled: true,  roles: ["registry_host", "ipa_client", "logger_client"], ram_mb: 3072, rt_disk: '320G', var_part: 204800, iso: "registry"}
+      - {name: "logger",     ip_addr: "192.168.122.41", enabled: true,  roles: ["logger_host",   "ipa_client"]}
       - {name: "rdp",        ip_addr: "192.168.122.99", enabled: false, roles: ["ipa_client"]}
       - {name: "tang",       ip_addr: "192.168.122.71", enabled: false, roles: ["tang_host",     "ipa_client", "logger_client"], ram_mb: 3072}
       - {name: "vault",      ip_addr: "192.168.122.72", enabled: false, roles: ["vault_host",    "ipa_client", "logger_client"]}
@@ -143,7 +142,7 @@ all:
     ipa_ca_cert: "IPA CA Certificate file contents goes here"
     ocp_ansible_sshkey: "Ansible User SSH Key from /srv/keys/vm_key.pub goes here"
     master_node_count: 1
-    node_list: []
+    node_list:
       - {name: "node-01", role: "master", ip_addr: "192.168.122.151", enabled: true,  macAddr: "04:32:01:b8:3e:90"}
       - {name: "node-02", role: "master", ip_addr: "192.168.122.152", enabled: true,  macAddr: "04:32:01:b8:3e:b0"}
       - {name: "node-03", role: "master", ip_addr: "192.168.122.153", enabled: true,  macAddr: "04:32:01:ba:f8:e0"}
