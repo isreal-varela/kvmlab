@@ -16,8 +16,13 @@ ipa_host:
     ipaserver_no_hbac_allow: true
     #ipaserver_forwarders: '10.40.49.21,10.40.49.22'
     ipaserver_no_forwarders: true
+    # ipaserver_allow_zone_overlap: true
+    # ipaserver_reverse_zones: ['192.168.122.0/24']
+    # ipaserver_no_reverse: false
+    # ipaserver_auto_reverse: true
     ipaserver_setup_ca: true
     ipaserver_hostname: "ipa1.{{ dns_name}}"
+    local_dnf_repo: "ape-platform-local-repo"
 
 ipa_client:
   vars:
@@ -33,24 +38,58 @@ ipa_client:
     ipaclient_dns_servers: 192.168.122.40
     ipaclient_force_join: true
 
-logger_client:
+logger_host:
   hosts:
     logger
+
+logger_client:
+  children:
+    kvms
 
 #nbde_servers:
 #nbde_clients:
 
 foreman_host:
   hosts:
-    foreman
+    #foreman
+    test-frmn
   vars:
+    ipaadmin_password: "{{ vault_ipa_ipaadmin_pwd }}"
     is_upstream: false
+    env_classification: 'Unclassified'
+    env_label: '{{ dns_name | upper }} - {{ env_classification }} - 8-Ball Lab (Downstream)'
+    env_colorbar: '#fc3503'
+    frmn_host: "test-frmn.{{ dns_name }}"
+    frmn_url: "https://{{ frmn_host }}"
+    frmn_content_view: "APE_Content_View"
+    frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/{{ frmn_content_view }}/"
+    frmn_export_stg_target: "/srv/content_view/"
+    frmn_import_stg_source: "{{ frmn_export_stg_target }}"
+    frmn_import_stg_target: "/opt/pulp/imports/{{ frmn_content_view }}/"
+    frmn_import_stg_version_num: "1.0"
+    frmn_import_stg_tsfolder: "2024-08-27T15-03-57-00-00"
+    frmn_import_stg_metadata_filename: "metadata.json"
+    local_dnf_repo: "ape-platform-local-repo"
+    skip_cert: false
+    renew_cert: true
+    # skip_frmn_repo_sync: false
+    # skip_frmn_export: false
+    # skip_frmn_fetch: false
+    # skip_frmn_stage: true
+    # skip_frmn_import: true
 
 registry_host:
   hosts:
     mirror-reg
   vars:
     is_upstream: false
+    local_dnf_repo: "ape-platform-local-repo"
+
+rdp_host:
+  vars:
+    base_image_name: "rdp-template.qcow2"
+  hosts:
+    rdp
 
 kvms:
   vars:
@@ -69,6 +108,8 @@ all:
     vm_net: br_int
     net: br_int
     gateway: 192.168.122.1
+    dns1: 192.168.122.40
+    dns2: 1.1.1.1
     # gateway2: 10.40.49.1
     # dns1:  10.40.49.21
     # dns2: 10.40.49.22
@@ -77,30 +118,35 @@ all:
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
     dns_name: 'ape.dwnstrm'
     dns_search: 'ape.dwnstrm'
-    env_classification: 'Unclassified'
-    env_label: '{{ dns_name | upper }} - {{ env_classification }} - 8-Ball Lab (Downstream)'
-    env_colorbar: '#fc3503'
-    frmn_host: "foreman.{{ dns_name }}"
-    frmn_url: "https://{{ frmn_host }}"
-    frmn_content_view: "APE_Content_View"
-    frmn_export_stg_source: "/opt/pulp/exports/Default_Organization/{{ frmn_content_view }}/"
-    frmn_export_stg_target: "/srv/content_view/"
-    frmn_import_stg_source: "{{ frmn_export_stg_target }}"
-    frmn_import_stg_target: "/opt/pulp/imports/{{ frmn_content_view }}/"
-    frmn_import_stg_version_num: "1.0"
-    frmn_import_stg_tsfolder: "2024-08-27T15-03-57-00-00"
-    frmn_import_stg_metadata_filename: "metadata.json"
-    local_dnf_repo: "ape-platform-local-repo"
     skip_frmn_register: false
-    # skip_frmn_repo_sync: false
-    # skip_frmn_export: false
-    # skip_frmn_fetch: false
-    # skip_frmn_stage: true
-    # skip_frmn_import: true
     kvm_list:
-      - {name: "ipa1",       ip_addr: "192.168.122.40", enabled: true,  roles: ["ipa_host",                  ], cpus: 2, ram_mb: 4096, iso: "ipa-server"}
-      - {name: "foreman",    ip_addr: "192.168.122.44", enabled: true,  roles: ["foreman_host",  "ipa_client"], cpus: 4, ram_mb: 20480, rt_disk: '250G', var_part: 124000, iso: "foreman"}
-      - {name: "mirror-reg", ip_addr: "192.168.122.45", enabled: true,  roles: ["registry_host", "ipa_client"], ram_mb: 3072, rt_disk: '320G', var_part: 204800, iso: "registry"}
-      - {name: "logger",     ip_addr: "192.168.122.41", enabled: true,  roles: ["logger_host",   "ipa_client"]}
+      - {name: "ipa1",       ip_addr: "192.168.122.40", enabled: true,  roles: ["ipa_host",                    "logger_client" ], cpus: 2, ram_mb: 4096, iso: "ipa-server"}
+      - {name: "foreman",    ip_addr: "192.168.122.44", enabled: false, roles: ["foreman_host",  "ipa_client", "logger_client"], cpus: 4, ram_mb: 20480, rt_disk: '250G', var_part: 124000, iso: "foreman"}
+      - {name: "mirror-reg", ip_addr: "192.168.122.45", enabled: false, roles: ["registry_host", "ipa_client", "logger_client"], ram_mb: 3072, rt_disk: '320G', var_part: 204800, iso: "registry"}
+      - {name: "logger",     ip_addr: "192.168.122.41", enabled: false, roles: ["logger_host",   "ipa_client"]}
+      - {name: "rdp",        ip_addr: "192.168.122.99", enabled: false, roles: ["ipa_client"]}
       - {name: "tang",       ip_addr: "192.168.122.71", enabled: false, roles: ["tang_host",     "ipa_client", "logger_client"], ram_mb: 3072}
       - {name: "vault",      ip_addr: "192.168.122.72", enabled: false, roles: ["vault_host",    "ipa_client", "logger_client"]}
+
+
+    ## TEST OPENSHIFT INSTALL/PROVISION/STUFF
+    ocp_configs_path: '/srv/software/ocp/OCP01/configs'
+    ocp_configs_suffix: '-PlaybookGenerated'
+    ipaadmin_principal: admin
+    ipaadmin_password: "{{ vault_ipa_ipaadmin_pwd }}"
+    ipaclient_dns_servers: 192.168.122.40
+    cluster_name: "ocp01"
+    rendezvous_ip: "192.168.122.150"
+    default_interface_name: "ens1f0np0"
+    default_disk_device_name: "/dev/sda"
+    registry_path: "test-reg.ape.dwnstrm:8443"
+    ipa_ca_cert: "IPA CA Certificate file contents goes here"
+    ocp_ansible_sshkey: "Ansible User SSH Key from /srv/keys/vm_key.pub goes here"
+    master_node_count: 1
+    node_list: []
+      - {name: "node-01", role: "master", ip_addr: "192.168.122.151", enabled: true,  macAddr: "04:32:01:b8:3e:90"}
+      - {name: "node-02", role: "master", ip_addr: "192.168.122.152", enabled: true,  macAddr: "04:32:01:b8:3e:b0"}
+      - {name: "node-03", role: "master", ip_addr: "192.168.122.153", enabled: true,  macAddr: "04:32:01:ba:f8:e0"}
+    #  - {name: "node-XX", role: "worker", ip_addr: "192.168.122.154", enabled: false, macAddr: "a1:b1:c1:d1:e1:f1", ifname: "testDiffIfName-XX"}
+    #  - {name: "node-YY", role: "worker", ip_addr: "192.168.122.155", enabled: false, macAddr: "a2:b2:c2:d2:e2:f2", diskname: "/dev/sd_testDiffDiskName-YY"}
+    #  - {name: "node-ZZ", role: "worker", ip_addr: "192.168.122.156", enabled: false, macAddr: "a3:b3:c3:d3:e3:f3", ifname: "testDiffIName-ZZ", diskname: "/dev/sd_testDiffDiskName-ZZ"}

@@ -1,5 +1,19 @@
 ---
 
+- name: Certificate Housekeeping
+  hosts: foreman_host
+  become: true
+
+  tasks:
+    - name: Cleanout existing service to revoke existing certs
+      ipaservice:
+        ipaadmin_password: "{{ ipaadmin_password }}"
+        name: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
+        continue: true
+        state: absent
+      when: not ( is_upstream ) and ( not ( skip_cert ) or ( renew_cert ) )
+      tags: frmn_new_cert
+
 - name: Generate certificates for use with Foreman
   hosts: foreman_host
   become: true
@@ -11,7 +25,8 @@
             dns: "{{ inventory_hostname }}.{{ dns_name }}"
             principal: "HTTP/{{ inventory_hostname }}.{{ dns_name }}@{{ dns_name | upper }}"
             ca: ipa
-      when: ( is_upstream == false ) and ( not ( skip_cert | default( false ) ) )
+      when: not ( is_upstream ) and ( not ( skip_cert ) or ( renew_cert ) )
+      tags: frmn_new_cert
 
 - name: Playbook to install foreman
   hosts: foreman_host
@@ -24,6 +39,7 @@
         path: "/opt/pulp"
         recurse: true
         mode: 0775
+      tags: frmn_install
 
     - name: Allow incoming traffic to the local host
       ansible.builtin.include_role:
@@ -34,6 +50,7 @@
              service: [http, https],
              port: ['53/udp', '53/tcp', '67/udp', '69/udp', '5647/tcp', '8000/tcp', '8140/tcp', '9090/tcp'],
              state: enabled}
+      tags: frmn_install
 
     - name: Mount the ISO file
       ansible.builtin.mount:
@@ -43,35 +60,41 @@
         boot: false
         opts: "ro,noauto"
         state: mounted
+      tags: frmn_install
 
     - name: "Check that the /etc/yum.repos.d/foreman-local.repo exists"
       ansible.builtin.stat:
         path: /etc/yum.repos.d/foreman-local.repo
       register: repofile_stat_result
+      tags: frmn_install
 
     - name: "Upload 'foreman-local.repo' file"
       ansible.builtin.template:
         src: foreman-iso.repo.j2
         dest: "/etc/yum.repos.d/foreman-local.repo"
       when: not repofile_stat_result.stat.exists
+      tags: frmn_install
 
     - name: Execute dnf update
       ansible.builtin.shell: |
         dnf --assumeno --nobest update
       when: not repofile_stat_result.stat.exists
       failed_when: false
+      tags: frmn_install
 
     - name: Download the foreman-installer-katello
       ansible.builtin.dnf:
         name: foreman-installer-katello
         state: present
+      tags: frmn_install
 
     - name: Download the ansiblerole-foreman_scap_client
       ansible.builtin.dnf:
         name: ansiblerole-foreman_scap_client
         state: present
+      tags: frmn_install
 
-    - name: Execute foreman-installer (upstream-only [or when 'skip_cert'])
+    - name: Execute foreman-installer (upstream-only [or when 'skip_cert' or 'renew_cert'])
       ansible.builtin.shell: |
         foreman-installer --scenario katello \
           --foreman-proxy-content-pulpcore-additional-export-paths /opt/pulp/exports \
@@ -88,7 +111,8 @@
           --enable-foreman-proxy-plugin-ansible \
           -l INFO
       # register: fm_install_rc
-      when: ( is_upstream == true ) or ( skip_cert | default( false ) )
+      when: ( is_upstream )
+      tags: frmn_install
 
     - name: Execute foreman-installer (downstream-only)
       ansible.builtin.shell: |
@@ -110,8 +134,8 @@
           --enable-foreman-proxy-plugin-ansible \
           -l INFO
       # register: fm_install_rc
-      when: ( is_upstream == false ) and ( not ( skip_cert | default( false ) ) )
-
+      when: not ( is_upstream )
+      tags: frmn_install
 
       # HOLDING PEN FOR OTHER POSSIBLE CLI PARAMETERS
       #    --enable-foreman-plugin-remote-execution \
@@ -132,16 +156,19 @@
         baseurl: /mnt
         enabled: false
       failed_when: false
+      tags: frmn_install
 
     # Unmount ISO as should ONLY be req'd prior to and during "foreman-installer" execution
     - name: Unmount the ISO
       ansible.builtin.mount:
         path: /mnt
         state: unmounted
+      tags: frmn_install
 
     - name: adding existing user 'ansible' to group 'pulp'
       user:
         name: ansible
         groups: pulp
         append: yes
+      tags: frmn_install
 
